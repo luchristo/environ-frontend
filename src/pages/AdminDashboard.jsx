@@ -243,10 +243,12 @@ Environ Facilities
   const formatDate = (date) => {
     if (!date) return "Date unavailable";
 
-    return new Date(date).toLocaleDateString("en-GB", {
+    return new Date(date).toLocaleString("en-GB", {
       day: "2-digit",
       month: "short",
       year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -258,52 +260,94 @@ Environ Facilities
     return <div style={loadingPage}>Checking admin access...</div>;
   }
 
-  if (!isAdmin) {
-    return null;
-  }
+  if (!isAdmin) return null;
 
   return (
     <div style={page}>
-      <header style={header}>
-        <div>
-          <h1 style={title}>Admin Dashboard</h1>
-          <p style={subtitle}>Manage bookings, quotes and invoices.</p>
+      <aside style={sidebar}>
+        <div style={brandBox}>
+          <div style={brandIcon}>EF</div>
+          <div>
+            <h2 style={brandTitle}>Environ</h2>
+            <p style={brandSub}>Facilities</p>
+          </div>
+        </div>
+
+        <nav style={nav}>
+          <button style={navActive}>Dashboard</button>
+          <button style={navItem}>Bookings</button>
+          <button style={navItem}>Invoices</button>
+          <button style={navItem}>Customers</button>
+          <button style={navItem}>Services</button>
+        </nav>
+
+        <div style={helpBox}>
+          <p style={helpTitle}>Need help?</p>
+          <p style={helpText}>Business support</p>
+          <a href="tel:+447404536265" style={helpPhone}>
+            07404 536265
+          </a>
         </div>
 
         <button onClick={logout} style={logoutButton}>
           Logout
         </button>
-      </header>
+      </aside>
 
       <main style={main}>
+        <header style={topbar}>
+          <div>
+            <h1 style={title}>Admin Dashboard</h1>
+            <p style={subtitle}>Manage bookings, quotes and invoices.</p>
+          </div>
+
+          <button onClick={fetchBookings} style={refreshButton}>
+            Refresh
+          </button>
+        </header>
+
         <section style={summaryGrid}>
           <div style={summaryCard}>
-            <span style={summaryLabel}>Total bookings</span>
-            <strong style={summaryNumber}>{bookings.length}</strong>
+            <div style={summaryIcon}>📅</div>
+            <div>
+              <span style={summaryLabel}>Total Bookings</span>
+              <strong style={summaryNumber}>{bookings.length}</strong>
+            </div>
           </div>
 
           <div style={summaryCard}>
-            <span style={summaryLabel}>New</span>
-            <strong style={summaryNumber}>{getBookingCount("new")}</strong>
+            <div style={summaryIcon}>🕒</div>
+            <div>
+              <span style={summaryLabel}>New</span>
+              <strong style={summaryNumber}>{getBookingCount("new")}</strong>
+            </div>
           </div>
 
           <div style={summaryCard}>
-            <span style={summaryLabel}>Confirmed</span>
-            <strong style={summaryNumber}>{getBookingCount("confirmed")}</strong>
+            <div style={summaryIcon}>✅</div>
+            <div>
+              <span style={summaryLabel}>Confirmed</span>
+              <strong style={summaryNumber}>
+                {getBookingCount("confirmed")}
+              </strong>
+            </div>
           </div>
 
           <div style={summaryCard}>
-            <span style={summaryLabel}>Completed</span>
-            <strong style={summaryNumber}>{getBookingCount("completed")}</strong>
+            <div style={summaryIcon}>🏁</div>
+            <div>
+              <span style={summaryLabel}>Completed</span>
+              <strong style={summaryNumber}>
+                {getBookingCount("completed")}
+              </strong>
+            </div>
           </div>
         </section>
 
         <section style={section}>
           <div style={sectionHeader}>
             <h2 style={sectionTitle}>Booking Requests</h2>
-            <button onClick={fetchBookings} style={refreshButton}>
-              Refresh
-            </button>
+            <span style={countBadge}>{bookings.length} total</span>
           </div>
 
           {bookings.length === 0 ? (
@@ -316,51 +360,76 @@ Environ Facilities
                 const readableMessage = cleanBookingMessage(booking.message);
 
                 return (
-                  <div key={booking.id} style={bookingCard}>
-                    <div style={bookingTop}>
-                      <div>
-                        <h3 style={bookingName}>{booking.name}</h3>
-                        <p style={bookingMeta}>
-                          {booking.service} • {formatDate(booking.created_at)}
-                        </p>
+                  <article key={booking.id} style={bookingCard}>
+                    <div style={bookingHeader}>
+                      <div style={customerBlock}>
+                        <div style={avatar}>
+                          {booking.name?.charAt(0)?.toUpperCase() || "C"}
+                        </div>
+
+                        <div>
+                          <h3 style={bookingName}>{booking.name}</h3>
+                          <p style={bookingMeta}>
+                            {booking.service} • {formatDate(booking.created_at)}
+                          </p>
+                        </div>
                       </div>
 
                       <span style={statusBadge}>{booking.status || "new"}</span>
                     </div>
 
-                    <div style={detailsGrid}>
-                      <p><strong>Phone:</strong> {booking.phone}</p>
-                      <p><strong>Email:</strong> {booking.email}</p>
-                      <p><strong>Postcode:</strong> {booking.postcode}</p>
-                      <p><strong>Address:</strong> {booking.address}</p>
+                    <div style={infoGrid}>
+                      <div style={infoItem}>
+                        <span style={infoLabel}>Phone</span>
+                        <strong>{booking.phone}</strong>
+                      </div>
+
+                      <div style={infoItem}>
+                        <span style={infoLabel}>Email</span>
+                        <strong>{booking.email}</strong>
+                      </div>
+
+                      <div style={infoItem}>
+                        <span style={infoLabel}>Postcode</span>
+                        <strong>{booking.postcode}</strong>
+                      </div>
+
+                      <div style={infoItem}>
+                        <span style={infoLabel}>Address</span>
+                        <strong>{booking.address}</strong>
+                      </div>
                     </div>
 
-                    {readableMessage && (
-                      <div style={messageBox}>
-                        <strong>Request details</strong>
-                        <p style={messageText}>{readableMessage}</p>
+                    <div style={twoColumn}>
+                      <div style={panel}>
+                        <h4 style={panelTitle}>Request Details</h4>
+                        <p style={messageText}>
+                          {readableMessage || "No extra message provided."}
+                        </p>
                       </div>
-                    )}
 
-                    {photoLinks.length > 0 && (
-                      <div style={photoBox}>
-                        <strong>Photos</strong>
+                      <div style={panel}>
+                        <h4 style={panelTitle}>Photos</h4>
 
-                        <div style={photoLinksBox}>
-                          {photoLinks.map((link, index) => (
-                            <a
-                              key={link}
-                              href={link}
-                              target="_blank"
-                              rel="noreferrer"
-                              style={photoLink}
-                            >
-                              Photo {index + 1}
-                            </a>
-                          ))}
-                        </div>
+                        {photoLinks.length === 0 ? (
+                          <p style={mutedText}>No photos uploaded.</p>
+                        ) : (
+                          <div style={photoLinksBox}>
+                            {photoLinks.map((link, index) => (
+                              <a
+                                key={link}
+                                href={link}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={photoLink}
+                              >
+                                View Photo {index + 1}
+                              </a>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
 
                     <div style={quoteBox}>
                       <h4 style={quoteTitle}>Send Quote / Invoice</h4>
@@ -368,7 +437,7 @@ Environ Facilities
                       <div style={quoteGrid}>
                         <input
                           type="number"
-                          placeholder="Amount e.g. 180"
+                          placeholder="Amount (£)"
                           value={invoiceValue.amount || ""}
                           onChange={(e) =>
                             handleInvoiceChange(
@@ -460,15 +529,17 @@ Environ Facilities
                           updateBookingStatus(booking.id, "cancelled")
                         }
                       >
-                        Cancel
+                        Cancel Booking
                       </button>
                     </div>
-                  </div>
+                  </article>
                 );
               })}
             </div>
           )}
         </section>
+
+        <footer style={footer}>© Environ Facilities</footer>
       </main>
     </div>
   );
@@ -488,75 +559,186 @@ const loadingPage = {
 
 const page = {
   minHeight: "100vh",
-  backgroundColor: "#f5f7fb",
+  backgroundColor: "#f4f7fb",
   fontFamily: "Arial",
-  color: "#1c2b44",
-};
-
-const header = {
-  backgroundColor: "white",
-  padding: "22px 34px",
+  color: "#17233b",
   display: "flex",
-  justifyContent: "space-between",
+};
+
+const sidebar = {
+  width: "245px",
+  background: "linear-gradient(180deg, #071d33 0%, #0b1628 100%)",
+  color: "white",
+  padding: "24px 18px",
+  minHeight: "100vh",
+  position: "sticky",
+  top: 0,
+};
+
+const brandBox = {
+  display: "flex",
   alignItems: "center",
-  boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
-  gap: "20px",
+  gap: "12px",
+  marginBottom: "30px",
 };
 
-const title = {
-  fontSize: "30px",
+const brandIcon = {
+  width: "44px",
+  height: "44px",
+  borderRadius: "14px",
+  backgroundColor: "#00BCD4",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontWeight: "900",
+};
+
+const brandTitle = {
   margin: 0,
+  fontSize: "22px",
 };
 
-const subtitle = {
-  margin: "6px 0 0",
-  color: "#5b6b84",
-  fontSize: "15px",
+const brandSub = {
+  margin: 0,
+  color: "#56d7e6",
+  fontWeight: "bold",
+};
+
+const nav = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "10px",
+};
+
+const navActive = {
+  backgroundColor: "#00a9bd",
+  color: "white",
+  border: "none",
+  padding: "13px 14px",
+  borderRadius: "10px",
+  textAlign: "left",
+  fontWeight: "bold",
+};
+
+const navItem = {
+  backgroundColor: "transparent",
+  color: "#dbeafe",
+  border: "none",
+  padding: "13px 14px",
+  borderRadius: "10px",
+  textAlign: "left",
+  fontWeight: "bold",
+};
+
+const helpBox = {
+  marginTop: "48px",
+  padding: "16px",
+  borderRadius: "16px",
+  backgroundColor: "rgba(255,255,255,0.08)",
+};
+
+const helpTitle = {
+  margin: "0 0 5px",
+  fontWeight: "bold",
+};
+
+const helpText = {
+  margin: "0 0 10px",
+  color: "#cbd5e1",
+  fontSize: "13px",
+};
+
+const helpPhone = {
+  color: "#56d7e6",
+  fontWeight: "bold",
+  textDecoration: "none",
 };
 
 const logoutButton = {
-  padding: "10px 18px",
+  marginTop: "18px",
+  width: "100%",
+  padding: "12px",
   border: "none",
   borderRadius: "10px",
-  backgroundColor: "#111",
+  backgroundColor: "#111827",
   color: "white",
   fontWeight: "bold",
   cursor: "pointer",
 };
 
 const main = {
-  maxWidth: "1100px",
-  margin: "0 auto",
-  padding: "28px 18px",
+  flex: 1,
+  padding: "28px",
+};
+
+const topbar = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginBottom: "24px",
+};
+
+const title = {
+  fontSize: "34px",
+  margin: 0,
+};
+
+const subtitle = {
+  margin: "8px 0 0",
+  color: "#64748b",
+};
+
+const refreshButton = {
+  padding: "12px 18px",
+  border: "none",
+  borderRadius: "12px",
+  backgroundColor: "#00a9bd",
+  color: "white",
+  fontWeight: "bold",
+  cursor: "pointer",
 };
 
 const summaryGrid = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-  gap: "14px",
+  gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+  gap: "18px",
   marginBottom: "28px",
 };
 
 const summaryCard = {
   backgroundColor: "white",
-  padding: "18px",
-  borderRadius: "16px",
-  boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+  padding: "20px",
+  borderRadius: "18px",
+  boxShadow: "0 8px 24px rgba(15,23,42,0.08)",
+  display: "flex",
+  alignItems: "center",
+  gap: "15px",
+};
+
+const summaryIcon = {
+  width: "48px",
+  height: "48px",
+  borderRadius: "50%",
+  backgroundColor: "#e8fbfd",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: "22px",
 };
 
 const summaryLabel = {
   display: "block",
-  color: "#5b6b84",
+  color: "#64748b",
   fontSize: "14px",
-  marginBottom: "8px",
+  marginBottom: "6px",
 };
 
 const summaryNumber = {
-  fontSize: "26px",
+  fontSize: "30px",
 };
 
 const section = {
-  marginBottom: "34px",
+  marginTop: "18px",
 };
 
 const sectionHeader = {
@@ -567,127 +749,160 @@ const sectionHeader = {
 };
 
 const sectionTitle = {
-  fontSize: "24px",
+  fontSize: "25px",
   margin: 0,
 };
 
-const refreshButton = {
+const countBadge = {
+  backgroundColor: "white",
   padding: "9px 14px",
-  border: "none",
-  borderRadius: "10px",
-  backgroundColor: "#00BCD4",
-  color: "white",
+  borderRadius: "999px",
+  color: "#64748b",
   fontWeight: "bold",
-  cursor: "pointer",
 };
 
 const emptyBox = {
   backgroundColor: "white",
-  padding: "24px",
-  borderRadius: "14px",
-  color: "#5b6b84",
+  padding: "26px",
+  borderRadius: "16px",
+  color: "#64748b",
 };
 
 const bookingList = {
   display: "flex",
   flexDirection: "column",
-  gap: "16px",
+  gap: "20px",
 };
 
 const bookingCard = {
   backgroundColor: "white",
   padding: "22px",
-  borderRadius: "18px",
-  boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
+  borderRadius: "20px",
+  boxShadow: "0 8px 24px rgba(15,23,42,0.08)",
 };
 
-const bookingTop = {
+const bookingHeader = {
   display: "flex",
   justifyContent: "space-between",
-  alignItems: "flex-start",
-  gap: "12px",
-  marginBottom: "14px",
+  alignItems: "center",
+  marginBottom: "18px",
+};
+
+const customerBlock = {
+  display: "flex",
+  alignItems: "center",
+  gap: "13px",
+};
+
+const avatar = {
+  width: "44px",
+  height: "44px",
+  borderRadius: "50%",
+  backgroundColor: "#00a9bd",
+  color: "white",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontWeight: "bold",
 };
 
 const bookingName = {
   margin: 0,
-  fontSize: "21px",
+  fontSize: "23px",
 };
 
 const bookingMeta = {
   margin: "5px 0 0",
-  color: "#5b6b84",
+  color: "#64748b",
   fontSize: "14px",
 };
 
 const statusBadge = {
-  backgroundColor: "#eef7f9",
-  color: "#00BCD4",
-  padding: "7px 12px",
+  backgroundColor: "#dcfce7",
+  color: "#16a34a",
+  padding: "9px 14px",
   borderRadius: "999px",
-  fontSize: "12px",
+  fontSize: "13px",
   fontWeight: "bold",
   textTransform: "capitalize",
 };
 
-const detailsGrid = {
+const infoGrid = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-  gap: "6px 18px",
+  gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+  gap: "12px",
+  padding: "16px",
   backgroundColor: "#f8fafc",
-  padding: "14px",
-  borderRadius: "12px",
-  lineHeight: "1.4",
+  borderRadius: "16px",
+  marginBottom: "14px",
 };
 
-const messageBox = {
+const infoItem = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "4px",
+};
+
+const infoLabel = {
+  color: "#64748b",
+  fontSize: "13px",
+  fontWeight: "bold",
+};
+
+const twoColumn = {
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr",
+  gap: "14px",
+};
+
+const panel = {
   backgroundColor: "#f8fafc",
-  padding: "14px",
-  borderRadius: "12px",
-  marginTop: "12px",
+  borderRadius: "16px",
+  padding: "16px",
+};
+
+const panelTitle = {
+  margin: "0 0 10px",
+  fontSize: "17px",
 };
 
 const messageText = {
   whiteSpace: "pre-line",
-  wordBreak: "break-word",
-  lineHeight: "1.5",
-  marginBottom: 0,
+  lineHeight: "1.55",
+  margin: 0,
 };
 
-const photoBox = {
-  marginTop: "12px",
-  padding: "14px",
-  backgroundColor: "#f8fafc",
-  borderRadius: "12px",
+const mutedText = {
+  color: "#64748b",
+  margin: 0,
 };
 
 const photoLinksBox = {
   display: "flex",
   flexWrap: "wrap",
-  gap: "8px",
-  marginTop: "9px",
+  gap: "9px",
 };
 
 const photoLink = {
-  backgroundColor: "#00BCD4",
+  backgroundColor: "#00a9bd",
   color: "white",
-  padding: "8px 11px",
-  borderRadius: "9px",
+  padding: "9px 12px",
+  borderRadius: "10px",
   textDecoration: "none",
-  fontSize: "13px",
   fontWeight: "bold",
+  fontSize: "13px",
 };
 
 const quoteBox = {
   marginTop: "14px",
-  padding: "14px",
-  backgroundColor: "#f5f7fb",
-  borderRadius: "14px",
+  padding: "16px",
+  backgroundColor: "#f8fafc",
+  borderRadius: "16px",
 };
 
 const quoteTitle = {
   margin: "0 0 12px",
-  fontSize: "17px",
+  fontSize: "18px",
 };
 
 const quoteGrid = {
@@ -697,55 +912,55 @@ const quoteGrid = {
 };
 
 const input = {
-  padding: "11px",
-  borderRadius: "10px",
-  border: "1px solid #d4dde7",
+  padding: "12px",
+  borderRadius: "11px",
+  border: "1px solid #cbd5e1",
   fontSize: "14px",
 };
 
 const textarea = {
   width: "100%",
   marginTop: "10px",
-  padding: "11px",
-  borderRadius: "10px",
-  border: "1px solid #d4dde7",
+  padding: "12px",
+  borderRadius: "11px",
+  border: "1px solid #cbd5e1",
+  minHeight: "78px",
   fontSize: "14px",
-  minHeight: "76px",
   boxSizing: "border-box",
 };
 
 const actionRow = {
   display: "flex",
-  gap: "9px",
+  gap: "10px",
   flexWrap: "wrap",
   marginTop: "12px",
 };
 
 const sendButton = {
-  padding: "10px 14px",
+  padding: "11px 15px",
   border: "none",
   borderRadius: "10px",
-  backgroundColor: "#4CAF50",
+  backgroundColor: "#16a34a",
   color: "white",
   fontWeight: "bold",
   cursor: "pointer",
 };
 
 const whatsappButton = {
-  padding: "10px 14px",
+  padding: "11px 15px",
   border: "none",
   borderRadius: "10px",
-  backgroundColor: "#25D366",
+  backgroundColor: "#22c55e",
   color: "white",
   fontWeight: "bold",
   cursor: "pointer",
 };
 
 const emailButton = {
-  padding: "10px 14px",
+  padding: "11px 15px",
   border: "none",
   borderRadius: "10px",
-  backgroundColor: "#00BCD4",
+  backgroundColor: "#2563eb",
   color: "white",
   fontWeight: "bold",
   cursor: "pointer",
@@ -753,39 +968,46 @@ const emailButton = {
 
 const statusActions = {
   display: "flex",
-  gap: "9px",
+  gap: "10px",
   flexWrap: "wrap",
   marginTop: "14px",
 };
 
 const smallBlueButton = {
-  padding: "9px 13px",
+  padding: "10px 14px",
   border: "none",
-  borderRadius: "9px",
-  backgroundColor: "#00BCD4",
+  borderRadius: "10px",
+  backgroundColor: "#00a9bd",
   color: "white",
   fontWeight: "bold",
   cursor: "pointer",
 };
 
 const smallGreenButton = {
-  padding: "9px 13px",
+  padding: "10px 14px",
   border: "none",
-  borderRadius: "9px",
-  backgroundColor: "#4CAF50",
+  borderRadius: "10px",
+  backgroundColor: "#16a34a",
   color: "white",
   fontWeight: "bold",
   cursor: "pointer",
 };
 
 const smallRedButton = {
-  padding: "9px 13px",
+  padding: "10px 14px",
   border: "none",
-  borderRadius: "9px",
-  backgroundColor: "#f44336",
+  borderRadius: "10px",
+  backgroundColor: "#dc2626",
   color: "white",
   fontWeight: "bold",
   cursor: "pointer",
+};
+
+const footer = {
+  textAlign: "center",
+  color: "#64748b",
+  fontSize: "13px",
+  padding: "30px",
 };
 
 export default AdminDashboard;

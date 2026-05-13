@@ -7,7 +7,6 @@ function AdminDashboard() {
   const navigate = useNavigate();
 
   const [bookings, setBookings] = useState([]);
-  const [reviews, setReviews] = useState([]);
   const [invoiceInputs, setInvoiceInputs] = useState({});
   const [checkingAdmin, setCheckingAdmin] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -41,7 +40,6 @@ function AdminDashboard() {
 
       setIsAdmin(true);
       fetchBookings();
-      fetchReviews();
     } catch (error) {
       console.error(error);
       navigate("/");
@@ -62,15 +60,6 @@ function AdminDashboard() {
       .order("created_at", { ascending: false });
 
     if (!error && data) setBookings(data);
-  };
-
-  const fetchReviews = async () => {
-    const { data, error } = await supabase
-      .from("reviews")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (!error && data) setReviews(data);
   };
 
   const updateBookingStatus = async (id, status) => {
@@ -240,34 +229,6 @@ Environ Facilities
     );
   };
 
-  const updateReviewStatus = async (id, status) => {
-    await supabase.from("reviews").update({ status }).eq("id", id);
-    fetchReviews();
-  };
-
-  const deleteReview = async (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to permanently delete this review?"
-    );
-
-    if (!confirmDelete) return;
-
-    const { error } = await supabase.from("reviews").delete().eq("id", id);
-
-    if (error) {
-      console.error(error);
-      alert("Could not delete review. Check your Supabase DELETE policy.");
-      return;
-    }
-
-    fetchReviews();
-  };
-
-  const saveReply = async (id, owner_replay) => {
-    await supabase.from("reviews").update({ owner_replay }).eq("id", id);
-    fetchReviews();
-  };
-
   const getPhotoLinks = (message = "") => {
     return message.split(/\s+/).filter((text) => text.startsWith("https://"));
   };
@@ -279,12 +240,22 @@ Environ Facilities
       .trim();
   };
 
+  const formatDate = (date) => {
+    if (!date) return "Date unavailable";
+
+    return new Date(date).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  const getBookingCount = (status) => {
+    return bookings.filter((booking) => booking.status === status).length;
+  };
+
   if (checkingAdmin) {
-    return (
-      <div style={loadingPage}>
-        Checking admin access...
-      </div>
-    );
+    return <div style={loadingPage}>Checking admin access...</div>;
   }
 
   if (!isAdmin) {
@@ -296,7 +267,7 @@ Environ Facilities
       <header style={header}>
         <div>
           <h1 style={title}>Admin Dashboard</h1>
-          <p style={subtitle}>Manage bookings, quotes, invoices and reviews.</p>
+          <p style={subtitle}>Manage bookings, quotes and invoices.</p>
         </div>
 
         <button onClick={logout} style={logoutButton}>
@@ -305,37 +276,63 @@ Environ Facilities
       </header>
 
       <main style={main}>
+        <section style={summaryGrid}>
+          <div style={summaryCard}>
+            <span style={summaryLabel}>Total bookings</span>
+            <strong style={summaryNumber}>{bookings.length}</strong>
+          </div>
+
+          <div style={summaryCard}>
+            <span style={summaryLabel}>New</span>
+            <strong style={summaryNumber}>{getBookingCount("new")}</strong>
+          </div>
+
+          <div style={summaryCard}>
+            <span style={summaryLabel}>Confirmed</span>
+            <strong style={summaryNumber}>{getBookingCount("confirmed")}</strong>
+          </div>
+
+          <div style={summaryCard}>
+            <span style={summaryLabel}>Completed</span>
+            <strong style={summaryNumber}>{getBookingCount("completed")}</strong>
+          </div>
+        </section>
+
         <section style={section}>
           <div style={sectionHeader}>
-            <h2 style={sectionTitle}>Bookings</h2>
-            <span style={countBadge}>{bookings.length} total</span>
+            <h2 style={sectionTitle}>Booking Requests</h2>
+            <button onClick={fetchBookings} style={refreshButton}>
+              Refresh
+            </button>
           </div>
 
           {bookings.length === 0 ? (
             <div style={emptyBox}>No bookings yet.</div>
           ) : (
-            <div style={grid}>
+            <div style={bookingList}>
               {bookings.map((booking) => {
                 const photoLinks = getPhotoLinks(booking.message);
                 const invoiceValue = invoiceInputs[booking.id] || {};
                 const readableMessage = cleanBookingMessage(booking.message);
 
                 return (
-                  <div key={booking.id} style={card}>
-                    <div style={cardTop}>
+                  <div key={booking.id} style={bookingCard}>
+                    <div style={bookingTop}>
                       <div>
-                        <h3 style={cardTitle}>{booking.name}</h3>
-                        <p style={smallText}>{booking.service}</p>
+                        <h3 style={bookingName}>{booking.name}</h3>
+                        <p style={bookingMeta}>
+                          {booking.service} • {formatDate(booking.created_at)}
+                        </p>
                       </div>
 
                       <span style={statusBadge}>{booking.status || "new"}</span>
                     </div>
 
-                    <div style={detailsBox}>
+                    <div style={detailsGrid}>
                       <p><strong>Phone:</strong> {booking.phone}</p>
                       <p><strong>Email:</strong> {booking.email}</p>
-                      <p><strong>Address:</strong> {booking.address}</p>
                       <p><strong>Postcode:</strong> {booking.postcode}</p>
+                      <p><strong>Address:</strong> {booking.address}</p>
                     </div>
 
                     {readableMessage && (
@@ -347,7 +344,7 @@ Environ Facilities
 
                     {photoLinks.length > 0 && (
                       <div style={photoBox}>
-                        <strong>Uploaded photos</strong>
+                        <strong>Photos</strong>
 
                         <div style={photoLinksBox}>
                           {photoLinks.map((link, index) => (
@@ -358,46 +355,48 @@ Environ Facilities
                               rel="noreferrer"
                               style={photoLink}
                             >
-                              View photo {index + 1}
+                              Photo {index + 1}
                             </a>
                           ))}
                         </div>
                       </div>
                     )}
 
-                    <div style={invoiceBox}>
-                      <h4 style={invoiceTitle}>Quote / Invoice</h4>
+                    <div style={quoteBox}>
+                      <h4 style={quoteTitle}>Send Quote / Invoice</h4>
 
-                      <input
-                        type="number"
-                        placeholder="Amount e.g. 180"
-                        value={invoiceValue.amount || ""}
-                        onChange={(e) =>
-                          handleInvoiceChange(
-                            booking.id,
-                            "amount",
-                            e.target.value
-                          )
-                        }
-                        style={invoiceInput}
-                      />
+                      <div style={quoteGrid}>
+                        <input
+                          type="number"
+                          placeholder="Amount e.g. 180"
+                          value={invoiceValue.amount || ""}
+                          onChange={(e) =>
+                            handleInvoiceChange(
+                              booking.id,
+                              "amount",
+                              e.target.value
+                            )
+                          }
+                          style={input}
+                        />
 
-                      <input
-                        type="text"
-                        placeholder="Payment link optional"
-                        value={invoiceValue.payment_link || ""}
-                        onChange={(e) =>
-                          handleInvoiceChange(
-                            booking.id,
-                            "payment_link",
-                            e.target.value
-                          )
-                        }
-                        style={invoiceInput}
-                      />
+                        <input
+                          type="text"
+                          placeholder="Payment link optional"
+                          value={invoiceValue.payment_link || ""}
+                          onChange={(e) =>
+                            handleInvoiceChange(
+                              booking.id,
+                              "payment_link",
+                              e.target.value
+                            )
+                          }
+                          style={input}
+                        />
+                      </div>
 
                       <textarea
-                        placeholder="Quote / invoice notes"
+                        placeholder="Notes for the customer"
                         value={invoiceValue.notes || ""}
                         onChange={(e) =>
                           handleInvoiceChange(
@@ -406,39 +405,39 @@ Environ Facilities
                             e.target.value
                           )
                         }
-                        style={invoiceTextarea}
+                        style={textarea}
                       />
 
-                      <div style={invoiceActions}>
+                      <div style={actionRow}>
                         <button
-                          style={invoiceButton}
+                          style={sendButton}
                           onClick={() => createInvoice(booking)}
                         >
                           Create Invoice + Send
                         </button>
 
                         <button
-                          style={purpleButton}
+                          style={whatsappButton}
                           onClick={() => sendQuoteWhatsApp(booking)}
                         >
-                          Send WhatsApp Only
+                          WhatsApp Only
                         </button>
 
                         <button
-                          style={blueButton}
+                          style={emailButton}
                           onClick={async () => {
                             const sent = await sendQuoteEmail(booking);
                             if (sent) alert("Quote email sent successfully.");
                           }}
                         >
-                          Send Email Only
+                          Email Only
                         </button>
                       </div>
                     </div>
 
-                    <div style={buttonGroup}>
+                    <div style={statusActions}>
                       <button
-                        style={blueButton}
+                        style={smallBlueButton}
                         onClick={() =>
                           updateBookingStatus(booking.id, "confirmed")
                         }
@@ -447,7 +446,7 @@ Environ Facilities
                       </button>
 
                       <button
-                        style={greenButton}
+                        style={smallGreenButton}
                         onClick={() =>
                           updateBookingStatus(booking.id, "completed")
                         }
@@ -456,7 +455,7 @@ Environ Facilities
                       </button>
 
                       <button
-                        style={redButton}
+                        style={smallRedButton}
                         onClick={() =>
                           updateBookingStatus(booking.id, "cancelled")
                         }
@@ -467,72 +466,6 @@ Environ Facilities
                   </div>
                 );
               })}
-            </div>
-          )}
-        </section>
-
-        <section style={section}>
-          <div style={sectionHeader}>
-            <h2 style={sectionTitle}>Reviews</h2>
-            <span style={countBadge}>{reviews.length} total</span>
-          </div>
-
-          {reviews.length === 0 ? (
-            <div style={emptyBox}>No reviews yet.</div>
-          ) : (
-            <div style={grid}>
-              {reviews.map((review) => (
-                <div key={review.id} style={card}>
-                  <div style={cardTop}>
-                    <div>
-                      <h3 style={cardTitle}>{review.name}</h3>
-                      <p style={stars}>{"⭐".repeat(review.rating)}</p>
-                    </div>
-
-                    <span style={statusBadge}>{review.status}</span>
-                  </div>
-
-                  <p style={reviewText}>{review.review}</p>
-
-                  <div style={buttonGroup}>
-                    <button
-                      style={blueButton}
-                      onClick={() =>
-                        updateReviewStatus(review.id, "approved")
-                      }
-                    >
-                      Approve
-                    </button>
-
-                    <button
-                      style={redButton}
-                      onClick={() => updateReviewStatus(review.id, "hidden")}
-                    >
-                      Hide
-                    </button>
-
-                    <button
-                      style={darkRedButton}
-                      onClick={() => deleteReview(review.id)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-
-                  <label style={label}>Business reply</label>
-
-                  <textarea
-                    placeholder="Write your reply..."
-                    defaultValue={review.owner_replay || ""}
-                    onBlur={(e) => saveReply(review.id, e.target.value)}
-                    style={textarea}
-                  />
-
-                  <p style={hint}>
-                    Reply saves automatically when you click outside the box.
-                  </p>
-                </div>
-              ))}
             </div>
           )}
         </section>
@@ -548,7 +481,7 @@ const loadingPage = {
   justifyContent: "center",
   alignItems: "center",
   fontFamily: "Arial",
-  fontSize: "22px",
+  fontSize: "20px",
   fontWeight: "bold",
   color: "#1c2b44",
 };
@@ -562,82 +495,129 @@ const page = {
 
 const header = {
   backgroundColor: "white",
-  padding: "26px 36px",
+  padding: "22px 34px",
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  boxShadow: "0 2px 10px rgba(0,0,0,0.06)",
+  boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
   gap: "20px",
 };
 
-const title = { fontSize: "34px", margin: 0 };
-const subtitle = { margin: "8px 0 0", color: "#5b6b84", fontSize: "16px" };
+const title = {
+  fontSize: "30px",
+  margin: 0,
+};
+
+const subtitle = {
+  margin: "6px 0 0",
+  color: "#5b6b84",
+  fontSize: "15px",
+};
 
 const logoutButton = {
-  padding: "12px 22px",
+  padding: "10px 18px",
   border: "none",
-  borderRadius: "12px",
+  borderRadius: "10px",
   backgroundColor: "#111",
   color: "white",
   fontWeight: "bold",
   cursor: "pointer",
 };
 
-const main = { maxWidth: "1250px", margin: "0 auto", padding: "36px 20px" };
-const section = { marginBottom: "48px" };
+const main = {
+  maxWidth: "1100px",
+  margin: "0 auto",
+  padding: "28px 18px",
+};
+
+const summaryGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+  gap: "14px",
+  marginBottom: "28px",
+};
+
+const summaryCard = {
+  backgroundColor: "white",
+  padding: "18px",
+  borderRadius: "16px",
+  boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+};
+
+const summaryLabel = {
+  display: "block",
+  color: "#5b6b84",
+  fontSize: "14px",
+  marginBottom: "8px",
+};
+
+const summaryNumber = {
+  fontSize: "26px",
+};
+
+const section = {
+  marginBottom: "34px",
+};
 
 const sectionHeader = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  marginBottom: "20px",
+  marginBottom: "16px",
 };
 
-const sectionTitle = { fontSize: "28px", margin: 0 };
+const sectionTitle = {
+  fontSize: "24px",
+  margin: 0,
+};
 
-const countBadge = {
-  backgroundColor: "white",
-  padding: "8px 14px",
-  borderRadius: "999px",
+const refreshButton = {
+  padding: "9px 14px",
+  border: "none",
+  borderRadius: "10px",
+  backgroundColor: "#00BCD4",
+  color: "white",
   fontWeight: "bold",
-  color: "#5b6b84",
+  cursor: "pointer",
 };
 
 const emptyBox = {
   backgroundColor: "white",
-  padding: "28px",
-  borderRadius: "16px",
-  color: "#5b6b84",
-  boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
-};
-
-const grid = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
-  gap: "22px",
-};
-
-const card = {
-  backgroundColor: "white",
   padding: "24px",
-  borderRadius: "18px",
-  boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
+  borderRadius: "14px",
+  color: "#5b6b84",
 };
 
-const cardTop = {
+const bookingList = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "16px",
+};
+
+const bookingCard = {
+  backgroundColor: "white",
+  padding: "22px",
+  borderRadius: "18px",
+  boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
+};
+
+const bookingTop = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "flex-start",
   gap: "12px",
-  marginBottom: "16px",
+  marginBottom: "14px",
 };
 
-const cardTitle = { margin: 0, fontSize: "22px" };
+const bookingName = {
+  margin: 0,
+  fontSize: "21px",
+};
 
-const smallText = {
-  margin: "6px 0 0",
+const bookingMeta = {
+  margin: "5px 0 0",
   color: "#5b6b84",
-  fontWeight: "bold",
+  fontSize: "14px",
 };
 
 const statusBadge = {
@@ -645,20 +625,23 @@ const statusBadge = {
   color: "#00BCD4",
   padding: "7px 12px",
   borderRadius: "999px",
-  fontSize: "13px",
+  fontSize: "12px",
   fontWeight: "bold",
   textTransform: "capitalize",
 };
 
-const detailsBox = {
-  backgroundColor: "#fbfcfe",
+const detailsGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+  gap: "6px 18px",
+  backgroundColor: "#f8fafc",
   padding: "14px",
   borderRadius: "12px",
-  lineHeight: "1.5",
+  lineHeight: "1.4",
 };
 
 const messageBox = {
-  backgroundColor: "#f5f7fb",
+  backgroundColor: "#f8fafc",
   padding: "14px",
   borderRadius: "12px",
   marginTop: "12px",
@@ -667,71 +650,79 @@ const messageBox = {
 const messageText = {
   whiteSpace: "pre-line",
   wordBreak: "break-word",
-  lineHeight: "1.55",
+  lineHeight: "1.5",
+  marginBottom: 0,
 };
 
 const photoBox = {
-  marginTop: "14px",
+  marginTop: "12px",
   padding: "14px",
-  backgroundColor: "#fbfcfe",
+  backgroundColor: "#f8fafc",
   borderRadius: "12px",
 };
 
 const photoLinksBox = {
   display: "flex",
   flexWrap: "wrap",
-  gap: "10px",
-  marginTop: "10px",
+  gap: "8px",
+  marginTop: "9px",
 };
 
 const photoLink = {
   backgroundColor: "#00BCD4",
   color: "white",
-  padding: "9px 12px",
-  borderRadius: "10px",
+  padding: "8px 11px",
+  borderRadius: "9px",
   textDecoration: "none",
-  fontSize: "14px",
+  fontSize: "13px",
   fontWeight: "bold",
 };
 
-const invoiceBox = {
-  marginTop: "16px",
-  padding: "16px",
+const quoteBox = {
+  marginTop: "14px",
+  padding: "14px",
   backgroundColor: "#f5f7fb",
   borderRadius: "14px",
-  display: "flex",
-  flexDirection: "column",
+};
+
+const quoteTitle = {
+  margin: "0 0 12px",
+  fontSize: "17px",
+};
+
+const quoteGrid = {
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr",
   gap: "10px",
 };
 
-const invoiceTitle = {
-  margin: 0,
-  fontSize: "18px",
-};
-
-const invoiceInput = {
-  padding: "12px",
+const input = {
+  padding: "11px",
   borderRadius: "10px",
   border: "1px solid #d4dde7",
-  fontSize: "15px",
+  fontSize: "14px",
 };
 
-const invoiceTextarea = {
-  padding: "12px",
+const textarea = {
+  width: "100%",
+  marginTop: "10px",
+  padding: "11px",
   borderRadius: "10px",
   border: "1px solid #d4dde7",
-  fontSize: "15px",
-  minHeight: "80px",
+  fontSize: "14px",
+  minHeight: "76px",
+  boxSizing: "border-box",
 };
 
-const invoiceActions = {
+const actionRow = {
   display: "flex",
-  gap: "10px",
+  gap: "9px",
   flexWrap: "wrap",
+  marginTop: "12px",
 };
 
-const invoiceButton = {
-  padding: "12px",
+const sendButton = {
+  padding: "10px 14px",
   border: "none",
   borderRadius: "10px",
   backgroundColor: "#4CAF50",
@@ -740,25 +731,18 @@ const invoiceButton = {
   cursor: "pointer",
 };
 
-const purpleButton = {
-  padding: "11px 16px",
+const whatsappButton = {
+  padding: "10px 14px",
   border: "none",
   borderRadius: "10px",
-  backgroundColor: "#9C27B0",
+  backgroundColor: "#25D366",
   color: "white",
   fontWeight: "bold",
   cursor: "pointer",
 };
 
-const buttonGroup = {
-  display: "flex",
-  gap: "10px",
-  flexWrap: "wrap",
-  marginTop: "18px",
-};
-
-const blueButton = {
-  padding: "11px 16px",
+const emailButton = {
+  padding: "10px 14px",
   border: "none",
   borderRadius: "10px",
   backgroundColor: "#00BCD4",
@@ -767,66 +751,41 @@ const blueButton = {
   cursor: "pointer",
 };
 
-const greenButton = {
-  padding: "11px 16px",
+const statusActions = {
+  display: "flex",
+  gap: "9px",
+  flexWrap: "wrap",
+  marginTop: "14px",
+};
+
+const smallBlueButton = {
+  padding: "9px 13px",
   border: "none",
-  borderRadius: "10px",
+  borderRadius: "9px",
+  backgroundColor: "#00BCD4",
+  color: "white",
+  fontWeight: "bold",
+  cursor: "pointer",
+};
+
+const smallGreenButton = {
+  padding: "9px 13px",
+  border: "none",
+  borderRadius: "9px",
   backgroundColor: "#4CAF50",
   color: "white",
   fontWeight: "bold",
   cursor: "pointer",
 };
 
-const redButton = {
-  padding: "11px 16px",
+const smallRedButton = {
+  padding: "9px 13px",
   border: "none",
-  borderRadius: "10px",
+  borderRadius: "9px",
   backgroundColor: "#f44336",
   color: "white",
   fontWeight: "bold",
   cursor: "pointer",
-};
-
-const darkRedButton = {
-  padding: "11px 16px",
-  border: "none",
-  borderRadius: "10px",
-  backgroundColor: "#b71c1c",
-  color: "white",
-  fontWeight: "bold",
-  cursor: "pointer",
-};
-
-const stars = { fontSize: "20px", margin: "6px 0 0" };
-
-const reviewText = {
-  lineHeight: "1.6",
-  backgroundColor: "#f5f7fb",
-  padding: "14px",
-  borderRadius: "12px",
-};
-
-const label = {
-  display: "block",
-  marginTop: "18px",
-  marginBottom: "8px",
-  fontWeight: "bold",
-};
-
-const textarea = {
-  width: "100%",
-  padding: "14px",
-  borderRadius: "12px",
-  border: "1px solid #d4dde7",
-  minHeight: "100px",
-  fontSize: "16px",
-  boxSizing: "border-box",
-};
-
-const hint = {
-  fontSize: "13px",
-  color: "#5b6b84",
-  marginTop: "6px",
 };
 
 export default AdminDashboard;

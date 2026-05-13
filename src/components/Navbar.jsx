@@ -28,15 +28,24 @@ function Navbar() {
   };
 
   return (
-    <div style={nav}>
-      <div style={contact}>
-        <a href="tel:+447404536265" style={link}>
-          📞 +44 7404 536265
-        </a>
+    <header style={nav}>
+      <div style={logoSection}>
+        <h2 style={logo}>ENVIRON FACILITIES</h2>
 
-        <a href="mailto:environfacilities@gmail.com" style={link}>
-          ✉️ environfacilities@gmail.com
-        </a>
+        <div style={contact}>
+          <a href="tel:+447404536265" style={link}>
+            +44 7404 536265
+          </a>
+
+          <span style={divider}>|</span>
+
+          <a
+            href="mailto:environfacilities@gmail.com"
+            style={link}
+          >
+            environfacilities@gmail.com
+          </a>
+        </div>
       </div>
 
       {user ? (
@@ -48,50 +57,71 @@ function Navbar() {
           Login
         </Link>
       )}
-    </div>
+    </header>
   );
 }
 
 const nav = {
-  backgroundColor: "#111",
-  padding: "12px 24px",
+  backgroundColor: "#ffffff",
+  padding: "18px 30px",
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  gap: "15px",
-  flexWrap: "wrap",
+  borderBottom: "1px solid #e5e7eb",
+  position: "sticky",
+  top: 0,
+  zIndex: 1000,
+};
+
+const logoSection = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "6px",
+};
+
+const logo = {
+  margin: 0,
+  fontSize: "24px",
+  fontWeight: "800",
+  color: "#111827",
+  letterSpacing: "1px",
 };
 
 const contact = {
   display: "flex",
-  gap: "22px",
+  alignItems: "center",
+  gap: "10px",
   flexWrap: "wrap",
 };
 
 const link = {
-  color: "white",
+  color: "#4b5563",
   textDecoration: "none",
-  fontWeight: "600",
-  fontSize: "15px",
+  fontSize: "14px",
+  fontWeight: "500",
+};
+
+const divider = {
+  color: "#cbd5e1",
 };
 
 const loginButton = {
-  backgroundColor: "#00BCD4",
+  backgroundColor: "#06b6d4",
   color: "white",
   textDecoration: "none",
-  padding: "8px 18px",
-  borderRadius: "8px",
-  fontWeight: "bold",
+  padding: "10px 20px",
+  borderRadius: "10px",
+  fontWeight: "700",
   fontSize: "14px",
 };
 
 const accountButton = {
-  backgroundColor: "#9C27B0",
+  backgroundColor: "#111827",
   color: "white",
   textDecoration: "none",
-  padding: "8px 18px",
-  borderRadius: "8px",
-  fontWeight: "bold",
+  padding: "10px 20px",
+  borderRadius: "10px",
+  fontWeight: "700",
   fontSize: "14px",
 };
 

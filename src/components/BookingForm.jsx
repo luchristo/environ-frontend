@@ -69,7 +69,7 @@ function BookingForm({ service, options }) {
         data: { user },
       } = await supabase.auth.getUser();
 
-      let uploadedPhotoLinks = [];
+      const uploadedPhotoLinks = [];
 
       for (const photo of photos) {
         const fileName = `${Date.now()}-${photo.name}`;
@@ -132,7 +132,7 @@ ${photoText}
 
       await emailjs.send(
         "service_uv59qba",
-        "template_fvc0ega",
+        "template_vduqtce",
         {
           name: formData.name,
           phone: formData.phone,
@@ -140,16 +140,7 @@ ${photoText}
           service,
           address: formData.address,
           postcode: formData.postcode,
-          message: `
-Options:
-${optionsText}
-
-Customer message:
-${formData.message}
-
-Photo links:
-${photoText}
-          `,
+          message: fullMessage,
         },
         "pN9rz35RPIteY-j3g"
       );

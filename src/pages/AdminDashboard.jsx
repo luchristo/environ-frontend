@@ -10,6 +10,7 @@ function AdminDashboard() {
   const [invoiceInputs, setInvoiceInputs] = useState({});
   const [checkingAdmin, setCheckingAdmin] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [activeTab, setActiveTab] = useState("dashboard");
 
   useEffect(() => {
     checkAdmin();
@@ -39,7 +40,7 @@ function AdminDashboard() {
       }
 
       setIsAdmin(true);
-      fetchBookings();
+      await fetchBookings();
     } catch (error) {
       console.error(error);
       navigate("/");
@@ -59,11 +60,26 @@ function AdminDashboard() {
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (!error && data) setBookings(data);
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    setBookings(data || []);
   };
 
   const updateBookingStatus = async (id, status) => {
-    await supabase.from("bookings").update({ status }).eq("id", id);
+    const { error } = await supabase
+      .from("bookings")
+      .update({ status })
+      .eq("id", id);
+
+    if (error) {
+      console.error(error);
+      alert("Could not update booking status.");
+      return;
+    }
+
     fetchBookings();
   };
 
@@ -166,7 +182,7 @@ ${invoiceData.notes ? `Notes: ${invoiceData.notes}` : ""}
 Please confirm if you would like to go ahead.
 
 Environ Facilities
-📞 07404 536265
+07404 536265
 `;
 
     window.open(
@@ -230,11 +246,13 @@ Environ Facilities
   };
 
   const getPhotoLinks = (message = "") => {
-    return message.split(/\s+/).filter((text) => text.startsWith("https://"));
+    return String(message)
+      .split(/\s+/)
+      .filter((text) => text.startsWith("https://"));
   };
 
   const cleanBookingMessage = (message = "") => {
-    return message
+    return String(message)
       .replace(/https:\/\/\S+/g, "")
       .replace("Uploaded photos:", "")
       .trim();
@@ -256,12 +274,19 @@ Environ Facilities
     return bookings.filter((booking) => booking.status === status).length;
   };
 
+  const uniqueCustomers = Array.from(
+    new Map(
+      bookings
+        .filter((booking) => booking.email)
+        .map((booking) => [booking.email, booking])
+    ).values()
+  );
+
   if (checkingAdmin) {
     return <div style={loadingPage}>Checking admin access...</div>;
   }
 
   if (!isAdmin) return null;
-
   return (
     <div style={page}>
       <aside style={sidebar}>
@@ -274,16 +299,51 @@ Environ Facilities
         </div>
 
         <nav style={nav}>
-          <button style={navActive}>Dashboard</button>
-          <button style={navItem}>Bookings</button>
-          <button style={navItem}>Invoices</button>
-          <button style={navItem}>Customers</button>
-          <button style={navItem}>Services</button>
+          <button
+            onClick={() => setActiveTab("dashboard")}
+            style={activeTab === "dashboard" ? navActive : navItem}
+          >
+            Dashboard
+          </button>
+
+          <button
+            onClick={() => setActiveTab("bookings")}
+            style={activeTab === "bookings" ? navActive : navItem}
+          >
+            Bookings
+          </button>
+
+          <button
+            onClick={() => setActiveTab("invoices")}
+            style={activeTab === "invoices" ? navActive : navItem}
+          >
+            Invoices
+          </button>
+
+          <button
+            onClick={() => setActiveTab("calendar")}
+            style={activeTab === "calendar" ? navActive : navItem}
+          >
+            Calendar
+          </button>
+
+          <button
+            onClick={() => setActiveTab("customers")}
+            style={activeTab === "customers" ? navActive : navItem}
+          >
+            Customers
+          </button>
+
+          <button
+            onClick={() => setActiveTab("services")}
+            style={activeTab === "services" ? navActive : navItem}
+          >
+            Services
+          </button>
         </nav>
 
         <div style={helpBox}>
-          <p style={helpTitle}>Need help?</p>
-          <p style={helpText}>Business support</p>
+          <p style={helpTitle}>Business support</p>
           <a href="tel:+447404536265" style={helpPhone}>
             07404 536265
           </a>
@@ -306,245 +366,344 @@ Environ Facilities
           </button>
         </header>
 
-        <section style={summaryGrid}>
-          <div style={summaryCard}>
-            <div style={summaryIcon}>📅</div>
-            <div>
-              <span style={summaryLabel}>Total Bookings</span>
-              <strong style={summaryNumber}>{bookings.length}</strong>
+        {activeTab === "dashboard" && (
+          <section style={summaryGrid}>
+            <div style={summaryCard}>
+              <div style={summaryIcon}>📅</div>
+              <div>
+                <span style={summaryLabel}>Total Bookings</span>
+                <strong style={summaryNumber}>{bookings.length}</strong>
+              </div>
             </div>
-          </div>
 
-          <div style={summaryCard}>
-            <div style={summaryIcon}>🕒</div>
-            <div>
-              <span style={summaryLabel}>New</span>
-              <strong style={summaryNumber}>{getBookingCount("new")}</strong>
+            <div style={summaryCard}>
+              <div style={summaryIcon}>🕒</div>
+              <div>
+                <span style={summaryLabel}>New</span>
+                <strong style={summaryNumber}>{getBookingCount("new")}</strong>
+              </div>
             </div>
-          </div>
 
-          <div style={summaryCard}>
-            <div style={summaryIcon}>✅</div>
-            <div>
-              <span style={summaryLabel}>Confirmed</span>
-              <strong style={summaryNumber}>
-                {getBookingCount("confirmed")}
-              </strong>
+            <div style={summaryCard}>
+              <div style={summaryIcon}>✅</div>
+              <div>
+                <span style={summaryLabel}>Confirmed</span>
+                <strong style={summaryNumber}>
+                  {getBookingCount("confirmed")}
+                </strong>
+              </div>
             </div>
-          </div>
 
-          <div style={summaryCard}>
-            <div style={summaryIcon}>🏁</div>
-            <div>
-              <span style={summaryLabel}>Completed</span>
-              <strong style={summaryNumber}>
-                {getBookingCount("completed")}
-              </strong>
+            <div style={summaryCard}>
+              <div style={summaryIcon}>🏁</div>
+              <div>
+                <span style={summaryLabel}>Completed</span>
+                <strong style={summaryNumber}>
+                  {getBookingCount("completed")}
+                </strong>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
-        <section style={section}>
-          <div style={sectionHeader}>
-            <h2 style={sectionTitle}>Booking Requests</h2>
-            <span style={countBadge}>{bookings.length} total</span>
-          </div>
+        {(activeTab === "dashboard" || activeTab === "bookings") && (
+          <section style={section}>
+            <div style={sectionHeader}>
+              <h2 style={sectionTitle}>Booking Requests</h2>
+              <span style={countBadge}>{bookings.length} total</span>
+            </div>
 
-          {bookings.length === 0 ? (
-            <div style={emptyBox}>No bookings yet.</div>
-          ) : (
-            <div style={bookingList}>
-              {bookings.map((booking) => {
-                const photoLinks = getPhotoLinks(booking.message);
-                const invoiceValue = invoiceInputs[booking.id] || {};
-                const readableMessage = cleanBookingMessage(booking.message);
+            {bookings.length === 0 ? (
+              <div style={emptyBox}>No bookings yet.</div>
+            ) : (
+              <div style={bookingList}>
+                {bookings.map((booking) => {
+                  const photoLinks = getPhotoLinks(booking.message);
+                  const invoiceValue = invoiceInputs[booking.id] || {};
+                  const readableMessage = cleanBookingMessage(booking.message);
 
-                return (
-                  <article key={booking.id} style={bookingCard}>
-                    <div style={bookingHeader}>
-                      <div style={customerBlock}>
-                        <div style={avatar}>
-                          {booking.name?.charAt(0)?.toUpperCase() || "C"}
+                  return (
+                    <article key={booking.id} style={bookingCard}>
+                      <div style={bookingHeader}>
+                        <div style={customerBlock}>
+                          <div style={avatar}>
+                            {booking.name?.charAt(0)?.toUpperCase() || "C"}
+                          </div>
+
+                          <div>
+                            <h3 style={bookingName}>
+                              {booking.name || "Customer"}
+                            </h3>
+                            <p style={bookingMeta}>
+                              {booking.service} •{" "}
+                              {formatDate(booking.created_at)}
+                            </p>
+                          </div>
                         </div>
 
-                        <div>
-                          <h3 style={bookingName}>{booking.name}</h3>
-                          <p style={bookingMeta}>
-                            {booking.service} • {formatDate(booking.created_at)}
-                          </p>
+                        <span style={statusBadge}>
+                          {booking.status || "new"}
+                        </span>
+                      </div>
+
+                      <div style={infoGrid}>
+                        <div style={infoItem}>
+                          <span style={infoLabel}>Phone</span>
+                          <strong>{booking.phone || "Not provided"}</strong>
+                        </div>
+
+                        <div style={infoItem}>
+                          <span style={infoLabel}>Email</span>
+                          <strong>{booking.email || "Not provided"}</strong>
+                        </div>
+
+                        <div style={infoItem}>
+                          <span style={infoLabel}>Postcode</span>
+                          <strong>{booking.postcode || "Not provided"}</strong>
+                        </div>
+
+                        <div style={infoItem}>
+                          <span style={infoLabel}>Address</span>
+                          <strong>{booking.address || "Not provided"}</strong>
                         </div>
                       </div>
 
-                      <span style={statusBadge}>{booking.status || "new"}</span>
-                    </div>
+                      <div style={twoColumn}>
+                        <div style={panel}>
+                          <h4 style={panelTitle}>Request Details</h4>
+                          <p style={messageText}>
+                            {readableMessage || "No extra message provided."}
+                          </p>
+                        </div>
+
+                        <div style={panel}>
+                          <h4 style={panelTitle}>Photos</h4>
+
+                          {photoLinks.length === 0 ? (
+                            <p style={mutedText}>No photos uploaded.</p>
+                          ) : (
+                            <div style={photoLinksBox}>
+                              {photoLinks.map((link, index) => (
+                                <a
+                                  key={link}
+                                  href={link}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  style={photoLink}
+                                >
+                                  View Photo {index + 1}
+                                </a>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div style={quoteBox}>
+                        <h4 style={quoteTitle}>Send Quote / Invoice</h4>
+
+                        <div style={quoteGrid}>
+                          <input
+                            type="number"
+                            placeholder="Amount (£)"
+                            value={invoiceValue.amount || ""}
+                            onChange={(e) =>
+                              handleInvoiceChange(
+                                booking.id,
+                                "amount",
+                                e.target.value
+                              )
+                            }
+                            style={input}
+                          />
+
+                          <input
+                            type="text"
+                            placeholder="Payment link optional"
+                            value={invoiceValue.payment_link || ""}
+                            onChange={(e) =>
+                              handleInvoiceChange(
+                                booking.id,
+                                "payment_link",
+                                e.target.value
+                              )
+                            }
+                            style={input}
+                          />
+                        </div>
+
+                        <textarea
+                          placeholder="Notes for the customer"
+                          value={invoiceValue.notes || ""}
+                          onChange={(e) =>
+                            handleInvoiceChange(
+                              booking.id,
+                              "notes",
+                              e.target.value
+                            )
+                          }
+                          style={textarea}
+                        />
+
+                        <div style={actionRow}>
+                          <button
+                            style={sendButton}
+                            onClick={() => createInvoice(booking)}
+                          >
+                            Create Invoice + Send
+                          </button>
+
+                          <button
+                            style={whatsappButton}
+                            onClick={() => sendQuoteWhatsApp(booking)}
+                          >
+                            WhatsApp Only
+                          </button>
+
+                          <button
+                            style={emailButton}
+                            onClick={async () => {
+                              const sent = await sendQuoteEmail(booking);
+                              if (sent) alert("Quote email sent successfully.");
+                            }}
+                          >
+                            Email Only
+                          </button>
+                        </div>
+                      </div>
+
+                      <div style={statusActions}>
+                        <button
+                          style={smallBlueButton}
+                          onClick={() =>
+                            updateBookingStatus(booking.id, "confirmed")
+                          }
+                        >
+                          Confirm
+                        </button>
+
+                        <button
+                          style={smallGreenButton}
+                          onClick={() =>
+                            updateBookingStatus(booking.id, "completed")
+                          }
+                        >
+                          Complete
+                        </button>
+
+                        <button
+                          style={smallRedButton}
+                          onClick={() =>
+                            updateBookingStatus(booking.id, "cancelled")
+                          }
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        )}
+
+        {activeTab === "invoices" && (
+          <section style={section}>
+            <h2 style={sectionTitle}>Invoices</h2>
+
+            <div style={emptyBox}>
+              Invoices are created from each booking card.
+              <br />
+              <br />
+              Current payment status is manual. Automatic paid/unpaid updates
+              require Stripe webhooks.
+            </div>
+          </section>
+        )}
+
+        {activeTab === "calendar" && (
+          <section style={section}>
+            <div style={sectionHeader}>
+              <h2 style={sectionTitle}>Booking Calendar</h2>
+              <span style={countBadge}>{bookings.length} bookings</span>
+            </div>
+
+            <div style={calendarGrid}>
+              {bookings.length === 0 ? (
+                <div style={emptyBox}>No bookings to show.</div>
+              ) : (
+                bookings.map((booking) => (
+                  <div key={booking.id} style={calendarCard}>
+                    <strong>{formatDate(booking.created_at)}</strong>
+                    <p style={calendarText}>{booking.name || "Customer"}</p>
+                    <p style={calendarText}>{booking.service}</p>
+                    <span style={statusBadge}>{booking.status || "new"}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+        )}
+
+        {activeTab === "customers" && (
+          <section style={section}>
+            <h2 style={sectionTitle}>Customers</h2>
+
+            <div style={bookingList}>
+              {uniqueCustomers.length === 0 ? (
+                <div style={emptyBox}>No customers yet.</div>
+              ) : (
+                uniqueCustomers.map((customer) => (
+                  <div key={customer.email || customer.id} style={bookingCard}>
+                    <h3 style={bookingName}>
+                      {customer.name || "Customer"}
+                    </h3>
 
                     <div style={infoGrid}>
                       <div style={infoItem}>
                         <span style={infoLabel}>Phone</span>
-                        <strong>{booking.phone}</strong>
+                        <strong>{customer.phone || "Not provided"}</strong>
                       </div>
 
                       <div style={infoItem}>
                         <span style={infoLabel}>Email</span>
-                        <strong>{booking.email}</strong>
-                      </div>
-
-                      <div style={infoItem}>
-                        <span style={infoLabel}>Postcode</span>
-                        <strong>{booking.postcode}</strong>
+                        <strong>{customer.email || "Not provided"}</strong>
                       </div>
 
                       <div style={infoItem}>
                         <span style={infoLabel}>Address</span>
-                        <strong>{booking.address}</strong>
+                        <strong>{customer.address || "Not provided"}</strong>
+                      </div>
+
+                      <div style={infoItem}>
+                        <span style={infoLabel}>Postcode</span>
+                        <strong>{customer.postcode || "Not provided"}</strong>
                       </div>
                     </div>
-
-                    <div style={twoColumn}>
-                      <div style={panel}>
-                        <h4 style={panelTitle}>Request Details</h4>
-                        <p style={messageText}>
-                          {readableMessage || "No extra message provided."}
-                        </p>
-                      </div>
-
-                      <div style={panel}>
-                        <h4 style={panelTitle}>Photos</h4>
-
-                        {photoLinks.length === 0 ? (
-                          <p style={mutedText}>No photos uploaded.</p>
-                        ) : (
-                          <div style={photoLinksBox}>
-                            {photoLinks.map((link, index) => (
-                              <a
-                                key={link}
-                                href={link}
-                                target="_blank"
-                                rel="noreferrer"
-                                style={photoLink}
-                              >
-                                View Photo {index + 1}
-                              </a>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div style={quoteBox}>
-                      <h4 style={quoteTitle}>Send Quote / Invoice</h4>
-
-                      <div style={quoteGrid}>
-                        <input
-                          type="number"
-                          placeholder="Amount (£)"
-                          value={invoiceValue.amount || ""}
-                          onChange={(e) =>
-                            handleInvoiceChange(
-                              booking.id,
-                              "amount",
-                              e.target.value
-                            )
-                          }
-                          style={input}
-                        />
-
-                        <input
-                          type="text"
-                          placeholder="Payment link optional"
-                          value={invoiceValue.payment_link || ""}
-                          onChange={(e) =>
-                            handleInvoiceChange(
-                              booking.id,
-                              "payment_link",
-                              e.target.value
-                            )
-                          }
-                          style={input}
-                        />
-                      </div>
-
-                      <textarea
-                        placeholder="Notes for the customer"
-                        value={invoiceValue.notes || ""}
-                        onChange={(e) =>
-                          handleInvoiceChange(
-                            booking.id,
-                            "notes",
-                            e.target.value
-                          )
-                        }
-                        style={textarea}
-                      />
-
-                      <div style={actionRow}>
-                        <button
-                          style={sendButton}
-                          onClick={() => createInvoice(booking)}
-                        >
-                          Create Invoice + Send
-                        </button>
-
-                        <button
-                          style={whatsappButton}
-                          onClick={() => sendQuoteWhatsApp(booking)}
-                        >
-                          WhatsApp Only
-                        </button>
-
-                        <button
-                          style={emailButton}
-                          onClick={async () => {
-                            const sent = await sendQuoteEmail(booking);
-                            if (sent) alert("Quote email sent successfully.");
-                          }}
-                        >
-                          Email Only
-                        </button>
-                      </div>
-                    </div>
-
-                    <div style={statusActions}>
-                      <button
-                        style={smallBlueButton}
-                        onClick={() =>
-                          updateBookingStatus(booking.id, "confirmed")
-                        }
-                      >
-                        Confirm
-                      </button>
-
-                      <button
-                        style={smallGreenButton}
-                        onClick={() =>
-                          updateBookingStatus(booking.id, "completed")
-                        }
-                      >
-                        Complete
-                      </button>
-
-                      <button
-                        style={smallRedButton}
-                        onClick={() =>
-                          updateBookingStatus(booking.id, "cancelled")
-                        }
-                      >
-                        Cancel Booking
-                      </button>
-                    </div>
-                  </article>
-                );
-              })}
+                  </div>
+                ))
+              )}
             </div>
-          )}
-        </section>
+          </section>
+        )}
+
+        {activeTab === "services" && (
+          <section style={section}>
+            <h2 style={sectionTitle}>Services</h2>
+
+            <div style={emptyBox}>
+              Services are currently managed in your service page files inside
+              VS Code.
+            </div>
+          </section>
+        )}
 
         <footer style={footer}>© Environ Facilities</footer>
       </main>
     </div>
   );
 }
-
 const loadingPage = {
   minHeight: "100vh",
   backgroundColor: "#f5f7fb",
@@ -593,16 +752,8 @@ const brandIcon = {
   fontWeight: "900",
 };
 
-const brandTitle = {
-  margin: 0,
-  fontSize: "22px",
-};
-
-const brandSub = {
-  margin: 0,
-  color: "#56d7e6",
-  fontWeight: "bold",
-};
+const brandTitle = { margin: 0, fontSize: "22px" };
+const brandSub = { margin: 0, color: "#56d7e6", fontWeight: "bold" };
 
 const nav = {
   display: "flex",
@@ -618,6 +769,7 @@ const navActive = {
   borderRadius: "10px",
   textAlign: "left",
   fontWeight: "bold",
+  cursor: "pointer",
 };
 
 const navItem = {
@@ -628,6 +780,7 @@ const navItem = {
   borderRadius: "10px",
   textAlign: "left",
   fontWeight: "bold",
+  cursor: "pointer",
 };
 
 const helpBox = {
@@ -638,14 +791,8 @@ const helpBox = {
 };
 
 const helpTitle = {
-  margin: "0 0 5px",
-  fontWeight: "bold",
-};
-
-const helpText = {
   margin: "0 0 10px",
-  color: "#cbd5e1",
-  fontSize: "13px",
+  fontWeight: "bold",
 };
 
 const helpPhone = {
@@ -678,15 +825,8 @@ const topbar = {
   marginBottom: "24px",
 };
 
-const title = {
-  fontSize: "34px",
-  margin: 0,
-};
-
-const subtitle = {
-  margin: "8px 0 0",
-  color: "#64748b",
-};
+const title = { fontSize: "34px", margin: 0 };
+const subtitle = { margin: "8px 0 0", color: "#64748b" };
 
 const refreshButton = {
   padding: "12px 18px",
@@ -733,13 +873,8 @@ const summaryLabel = {
   marginBottom: "6px",
 };
 
-const summaryNumber = {
-  fontSize: "30px",
-};
-
-const section = {
-  marginTop: "18px",
-};
+const summaryNumber = { fontSize: "30px" };
+const section = { marginTop: "18px" };
 
 const sectionHeader = {
   display: "flex",
@@ -748,10 +883,7 @@ const sectionHeader = {
   marginBottom: "16px",
 };
 
-const sectionTitle = {
-  fontSize: "25px",
-  margin: 0,
-};
+const sectionTitle = { fontSize: "25px", margin: 0 };
 
 const countBadge = {
   backgroundColor: "white",
@@ -766,6 +898,7 @@ const emptyBox = {
   padding: "26px",
   borderRadius: "16px",
   color: "#64748b",
+  lineHeight: "1.6",
 };
 
 const bookingList = {
@@ -806,10 +939,7 @@ const avatar = {
   fontWeight: "bold",
 };
 
-const bookingName = {
-  margin: 0,
-  fontSize: "23px",
-};
+const bookingName = { margin: 0, fontSize: "23px" };
 
 const bookingMeta = {
   margin: "5px 0 0",
@@ -861,10 +991,7 @@ const panel = {
   padding: "16px",
 };
 
-const panelTitle = {
-  margin: "0 0 10px",
-  fontSize: "17px",
-};
+const panelTitle = { margin: "0 0 10px", fontSize: "17px" };
 
 const messageText = {
   whiteSpace: "pre-line",
@@ -872,10 +999,7 @@ const messageText = {
   margin: 0,
 };
 
-const mutedText = {
-  color: "#64748b",
-  margin: 0,
-};
+const mutedText = { color: "#64748b", margin: 0 };
 
 const photoLinksBox = {
   display: "flex",
@@ -900,10 +1024,7 @@ const quoteBox = {
   borderRadius: "16px",
 };
 
-const quoteTitle = {
-  margin: "0 0 12px",
-  fontSize: "18px",
-};
+const quoteTitle = { margin: "0 0 12px", fontSize: "18px" };
 
 const quoteGrid = {
   display: "grid",
@@ -1003,6 +1124,24 @@ const smallRedButton = {
   cursor: "pointer",
 };
 
+const calendarGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+  gap: "16px",
+};
+
+const calendarCard = {
+  backgroundColor: "white",
+  padding: "18px",
+  borderRadius: "16px",
+  boxShadow: "0 8px 24px rgba(15,23,42,0.08)",
+};
+
+const calendarText = {
+  color: "#64748b",
+  margin: "8px 0",
+};
+
 const footer = {
   textAlign: "center",
   color: "#64748b",
@@ -1011,3 +1150,4 @@ const footer = {
 };
 
 export default AdminDashboard;
+

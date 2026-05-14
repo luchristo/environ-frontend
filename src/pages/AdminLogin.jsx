@@ -1,16 +1,14 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
-import { useNavigate } from "react-router-dom";
 
 function AdminLogin() {
-  const navigate = useNavigate();
-
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
 
   const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -23,18 +21,44 @@ function AdminLogin() {
     e.preventDefault();
 
     setErrorMessage("");
+    setIsLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email: formData.email,
-      password: formData.password,
-    });
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
 
-    if (error) {
-      setErrorMessage("Invalid login details.");
-      return;
+      if (error) {
+        setErrorMessage("Invalid login details.");
+        setIsLoading(false);
+        return;
+      }
+
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", data.user.id)
+        .single();
+
+      if (profileError || profile?.role !== "admin") {
+        await supabase.auth.signOut({ scope: "global" });
+
+        localStorage.clear();
+        sessionStorage.clear();
+
+        setErrorMessage("This account is not an admin.");
+        setIsLoading(false);
+        return;
+      }
+
+      window.location.replace("/admin");
+    } catch (err) {
+      console.error(err);
+      setErrorMessage("Something went wrong.");
     }
 
-    navigate("/admin");
+    setIsLoading(false);
   };
 
   return (
@@ -62,12 +86,14 @@ function AdminLogin() {
           style={input}
         />
 
-        <button type="submit" style={button}>
-          Login
+        <button type="submit" style={button} disabled={isLoading}>
+          {isLoading ? "Logging in..." : "Login"}
         </button>
 
         {errorMessage && (
-          <p style={errorText}>{errorMessage}</p>
+          <p style={errorText}>
+            {errorMessage}
+          </p>
         )}
       </form>
     </div>
@@ -97,7 +123,6 @@ const form = {
 const title = {
   textAlign: "center",
   color: "#1c2b44",
-  marginBottom: "10px",
 };
 
 const input = {
@@ -121,6 +146,7 @@ const button = {
 const errorText = {
   color: "red",
   textAlign: "center",
+  fontWeight: "bold",
 };
 
 export default AdminLogin;

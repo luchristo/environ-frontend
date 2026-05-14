@@ -1,10 +1,8 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 function CustomerLogin() {
-  const navigate = useNavigate();
-
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -26,7 +24,7 @@ function CustomerLogin() {
     setLoading(true);
     setMessage("");
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: formData.email,
       password: formData.password,
     });
@@ -37,8 +35,31 @@ function CustomerLogin() {
       return;
     }
 
-    navigate("/customer-dashboard");
-    setLoading(false);
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", data.user.id)
+      .single();
+
+    if (profileError) {
+      await supabase.auth.signOut({ scope: "global" });
+      localStorage.clear();
+      sessionStorage.clear();
+      setMessage("Could not check account role. Please try again.");
+      setLoading(false);
+      return;
+    }
+
+    if (profile?.role === "admin") {
+      await supabase.auth.signOut({ scope: "global" });
+      localStorage.clear();
+      sessionStorage.clear();
+      setMessage("Admin accounts must use the admin login page.");
+      setLoading(false);
+      return;
+    }
+
+    window.location.href = "/customer-dashboard";
   };
 
   return (
@@ -66,8 +87,8 @@ function CustomerLogin() {
           style={input}
         />
 
-        <button type="submit" style={button}>
-          {loading ? "Logging in..." : "Login"}
+        <button type="submit" style={button} disabled={loading}>
+          {loading ? "Checking account..." : "Login"}
         </button>
 
         {message && <p style={messageStyle}>{message}</p>}

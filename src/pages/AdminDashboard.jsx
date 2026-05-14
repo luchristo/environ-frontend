@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import emailjs from "@emailjs/browser";
 import { supabase } from "../lib/supabase";
-import { useNavigate } from "react-router-dom";
+
 
 function AdminDashboard() {
-  const navigate = useNavigate();
 
   const [bookings, setBookings] = useState([]);
   const [invoiceInputs, setInvoiceInputs] = useState({});
@@ -23,7 +22,7 @@ function AdminDashboard() {
       } = await supabase.auth.getSession();
 
       if (!session) {
-        navigate("/admin-login");
+        window.location.href = "/admin-login";
         return;
       }
 
@@ -34,25 +33,39 @@ function AdminDashboard() {
         .single();
 
       if (error || profile?.role !== "admin") {
-        alert("You are not allowed to access the admin dashboard.");
-        navigate("/");
-        return;
-      }
+  alert("You are not allowed to access the admin dashboard.");
+
+  await supabase.auth.signOut({ scope: "global" });
+  localStorage.clear();
+  sessionStorage.clear();
+
+  window.location.replace("/admin-login");
+  return;
+}
 
       setIsAdmin(true);
       await fetchBookings();
     } catch (error) {
       console.error(error);
-      navigate("/");
+      window.location.href = "/";
     } finally {
       setCheckingAdmin(false);
     }
   };
 
   const logout = async () => {
-    await supabase.auth.signOut();
-    navigate("/admin-login");
-  };
+  await supabase.auth.signOut({ scope: "global" });
+
+  Object.keys(localStorage).forEach((key) => {
+    localStorage.removeItem(key);
+  });
+
+  Object.keys(sessionStorage).forEach((key) => {
+    sessionStorage.removeItem(key);
+  });
+
+  window.location.replace("/admin-login");
+};
 
   const fetchBookings = async () => {
     const { data, error } = await supabase
@@ -271,16 +284,20 @@ Environ Facilities
   };
 
   const getBookingCount = (status) => {
-    return bookings.filter((booking) => booking.status === status).length;
-  };
+  return bookings.filter((booking) => booking.status === status).length;
+};
 
-  const uniqueCustomers = Array.from(
-    new Map(
-      bookings
-        .filter((booking) => booking.email)
-        .map((booking) => [booking.email, booking])
-    ).values()
-  );
+const isMinimizedBooking = (booking) => {
+  return booking.status === "confirmed" || booking.status === "completed";
+};
+
+const uniqueCustomers = Array.from(
+  new Map(
+    bookings
+      .filter((booking) => booking.email)
+      .map((booking) => [booking.email, booking])
+  ).values()
+);
 
   if (checkingAdmin) {
     return <div style={loadingPage}>Checking admin access...</div>;
@@ -361,9 +378,17 @@ Environ Facilities
             <p style={subtitle}>Manage bookings, quotes and invoices.</p>
           </div>
 
-          <button onClick={fetchBookings} style={refreshButton}>
-            Refresh
-          </button>
+          <button
+  onClick={async () => {
+    setCheckingAdmin(true);
+    await fetchBookings();
+    setCheckingAdmin(false);
+  }}
+  style={refreshButton}
+>
+  Refresh
+</button> 
+
         </header>
 
         {activeTab === "dashboard" && (
@@ -383,7 +408,7 @@ Environ Facilities
                 <strong style={summaryNumber}>{getBookingCount("new")}</strong>
               </div>
             </div>
-
+                
             <div style={summaryCard}>
               <div style={summaryIcon}>✅</div>
               <div>
@@ -422,8 +447,43 @@ Environ Facilities
                   const invoiceValue = invoiceInputs[booking.id] || {};
                   const readableMessage = cleanBookingMessage(booking.message);
 
-                  return (
-                    <article key={booking.id} style={bookingCard}>
+                  if (isMinimizedBooking(booking)) {
+  return (
+    <article key={booking.id} style={miniBookingCard}>
+      <div>
+        <h3 style={bookingName}>
+          {booking.name || "Customer"}
+        </h3>
+
+        <p style={bookingMeta}>
+          {booking.service} •{" "}
+          {formatDate(
+            booking.preferred_date || booking.created_at
+          )}
+        </p>
+      </div>
+
+      <div style={miniActions}>
+        <span style={statusBadge}>
+          {booking.status}
+        </span>
+
+        <button
+          style={smallBlueButton}
+          onClick={() =>
+            updateBookingStatus(booking.id, "new")
+          }
+        >
+          Reopen
+        </button>
+      </div>
+    </article>
+  );
+}
+
+return (
+  <article key={booking.id} style={bookingCard}>
+
                       <div style={bookingHeader}>
                         <div style={customerBlock}>
                           <div style={avatar}>
@@ -499,8 +559,8 @@ Environ Facilities
                         </div>
                       </div>
 
-                      <div style={quoteBox}>
-                        <h4 style={quoteTitle}>Send Quote / Invoice</h4>
+                      <details style={quoteBox}>
+  <summary style={quoteSummary}>Create Quote / Invoice</summary>
 
                         <div style={quoteGrid}>
                           <input
@@ -570,7 +630,7 @@ Environ Facilities
                             Email Only
                           </button>
                         </div>
-                      </div>
+                      </details>
 
                       <div style={statusActions}>
                         <button
@@ -635,7 +695,7 @@ Environ Facilities
               ) : (
                 bookings.map((booking) => (
                   <div key={booking.id} style={calendarCard}>
-                    <strong>{formatDate(booking.created_at)}</strong>
+                   <strong>{formatDate(booking.preferred_date || booking.created_at)}</strong>
                     <p style={calendarText}>{booking.name || "Customer"}</p>
                     <p style={calendarText}>{booking.service}</p>
                     <span style={statusBadge}>{booking.status || "new"}</span>
@@ -1024,7 +1084,32 @@ const quoteBox = {
   borderRadius: "16px",
 };
 
-const quoteTitle = { margin: "0 0 12px", fontSize: "18px" };
+const miniBookingCard = {
+  backgroundColor: "white",
+  padding: "16px 20px",
+  borderRadius: "16px",
+  boxShadow: "0 8px 24px rgba(15,23,42,0.08)",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: "12px",
+};
+
+const miniActions = {
+  display: "flex",
+  alignItems: "center",
+  gap: "10px",
+  flexWrap: "wrap",
+};
+
+const quoteSummary = {
+  cursor: "pointer",
+  fontWeight: "bold",
+  fontSize: "18px",
+  marginBottom: "14px",
+  color: "#17233b",
+  outline: "none",
+};
 
 const quoteGrid = {
   display: "grid",

@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Logout from "./pages/Logout.jsx";
 
 import Home from "./pages/Home.jsx";
 import DomesticCleaning from "./pages/DomesticCleaning.jsx";
@@ -24,26 +25,54 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+
+        {/* HOME */}
         <Route path="/" element={<Home />} />
 
+        {/* SERVICES */}
         <Route path="/domestic-cleaning" element={<DomesticCleaning />} />
         <Route path="/commercial-cleaning" element={<CommercialCleaning />} />
-        <Route path="/end-of-tenancy-cleaning" element={<EndOfTenancyCleaning />} />
+        <Route
+          path="/end-of-tenancy-cleaning"
+          element={<EndOfTenancyCleaning />}
+        />
         <Route path="/carpet-cleaning" element={<CarpetCleaning />} />
         <Route path="/window-cleaning" element={<WindowCleaning />} />
         <Route path="/jet-wash" element={<JetWash />} />
-        <Route path="/garden-maintenance" element={<GardenMaintenance />} />
-        <Route path="/property-maintenance" element={<PropertyMaintenance />} />
-        <Route path="/building-management" element={<BuildingManagement />} />
-        <Route path="/cleaning-operatives" element={<Operatives />} />
+        <Route
+          path="/garden-maintenance"
+          element={<GardenMaintenance />}
+        />
+        <Route
+          path="/property-maintenance"
+          element={<PropertyMaintenance />}
+        />
+        <Route
+          path="/building-management"
+          element={<BuildingManagement />}
+        />
+        <Route
+          path="/cleaning-operatives"
+          element={<Operatives />}
+        />
 
-        <Route path="/admin-login" element={<AdminLogin />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-
+        {/* CUSTOMER */}
         <Route path="/signup" element={<CustomerSignup />} />
         <Route path="/login" element={<CustomerLogin />} />
-        <Route path="/customer-dashboard" element={<CustomerDashboard />} />
+        <Route
+          path="/customer-dashboard"
+          element={<CustomerDashboard />}
+        />
         <Route path="/edit-profile" element={<EditProfile />} />
+
+        {/* ADMIN */}
+        <Route path="/admin-login" element={<AdminLogin />} />
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/logout" element={<Logout />} />
+
+        {/* FALLBACK */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+
       </Routes>
     </BrowserRouter>
   );

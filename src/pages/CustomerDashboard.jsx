@@ -1,18 +1,46 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import emailjs from "@emailjs/browser";
 
 function CustomerDashboard() {
   const navigate = useNavigate();
+
+  const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [bookings, setBookings] = useState([]);
   const [invoices, setInvoices] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
+  const [photos, setPhotos] = useState([]);
+
+  const [requestForm, setRequestForm] = useState({
+    service: "",
+    preferred_date: "",
+    message: "",
+  });
+
+  const services = [
+    "Domestic Cleaning",
+    "Commercial Cleaning",
+    "End of Tenancy Cleaning",
+    "Carpet Cleaning",
+    "Window Cleaning",
+    "High Pressure Jet Wash",
+    "Garden Maintenance",
+    "Property Maintenance",
+    "Building Management Support",
+    "Cleaning Operatives",
+  ];
 
   useEffect(() => {
     loadCustomer();
   }, []);
 
   const loadCustomer = async () => {
+    setIsLoading(true);
+
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -22,36 +50,150 @@ function CustomerDashboard() {
       return;
     }
 
-    const user = session.user;
+    setUser(session.user);
 
     const { data: profileData } = await supabase
       .from("profiles")
       .select("*")
-      .eq("id", user.id)
+      .eq("id", session.user.id)
       .single();
 
-    setProfile(profileData);
+    setProfile(profileData || null);
 
     const { data: bookingData } = await supabase
       .from("bookings")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", session.user.id)
       .order("created_at", { ascending: false });
 
-    if (bookingData) setBookings(bookingData);
+    setBookings(bookingData || []);
 
     const { data: invoiceData } = await supabase
       .from("invoices")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", session.user.id)
       .order("created_at", { ascending: false });
 
-    if (invoiceData) setInvoices(invoiceData);
+    setInvoices(invoiceData || []);
+    setIsLoading(false);
   };
 
-  const logout = async () => {
-    await supabase.auth.signOut();
-    navigate("/login");
+const logout = async () => {
+  window.location.href = "/logout";
+};
+
+  const handleRequestChange = (e) => {
+    setRequestForm({
+      ...requestForm,
+      [e.target.name]: e.target.value,
+    });
+  };
+  const handlePhotos = (e) => {
+  setPhotos(Array.from(e.target.files));
+  };
+  const submitRequest = async (e) => {
+    e.preventDefault();
+    setStatusMessage("");
+
+    if (!requestForm.service || !requestForm.preferred_date) {
+      setStatusMessage("Please choose a service and preferred date.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    let uploadedPhotoLinks = [];
+
+for (const photo of photos) {
+  const fileName = `${Date.now()}-${photo.name}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("booking-photos")
+    .upload(fileName, photo);
+
+  if (uploadError) {
+    console.error(uploadError);
+    continue;
+  }
+
+  const { data } = supabase.storage
+    .from("booking-photos")
+    .getPublicUrl(fileName);
+
+  uploadedPhotoLinks.push(data.publicUrl);
+}
+
+const photoText =
+  uploadedPhotoLinks.length > 0
+    ? uploadedPhotoLinks.join("\n")
+    : "No photos uploaded";
+
+  const fullMessage = `
+  Customer dashboard request:
+
+  Preferred date:
+  ${requestForm.preferred_date}
+
+  Customer message:
+  ${requestForm.message || "No extra message provided."}
+
+  Uploaded photos:
+  ${photoText}
+  `;
+
+  setRequestForm({
+  service: "",
+  preferred_date: "",
+  message: "",
+  });
+  setPhotos([]);
+
+    const { error } = await supabase.from("bookings").insert([
+      {
+        user_id: user?.id || null,
+        name: profile?.full_name || user?.email || "Customer",
+        phone: profile?.phone || "",
+        email: profile?.email || user?.email || "",
+        address: profile?.address || "",
+        postcode: profile?.postcode || "",
+        service: requestForm.service,
+        preferred_date: requestForm.preferred_date,
+        message: fullMessage,
+        status: "new",
+      },
+    ]);
+
+    if (error) {
+      console.error(error);
+      setStatusMessage("Something went wrong. Please try again.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    await emailjs.send(
+  "service_uv59qba",
+  "template_vduqtce",
+  {
+    name: profile?.full_name || user?.email || "Customer",
+    phone: profile?.phone || "",
+    email: profile?.email || user?.email || "",
+    service: requestForm.service,
+    address: profile?.address || "",
+    postcode: profile?.postcode || "",
+    message: fullMessage,
+  },
+  "pN9rz35RPIteY-j3g"
+);
+
+    setStatusMessage("Your quote request has been sent.");
+    setRequestForm({
+      service: "",
+      preferred_date: "",
+      message: "",
+    });
+
+    await loadCustomer();
+    setIsSubmitting(false);
   };
 
   const cancelBooking = async (id) => {
@@ -61,10 +203,16 @@ function CustomerDashboard() {
 
     if (!confirmCancel) return;
 
-    await supabase
+    const { error } = await supabase
       .from("bookings")
       .update({ status: "cancelled" })
       .eq("id", id);
+
+    if (error) {
+      alert("Could not cancel booking.");
+      console.error(error);
+      return;
+    }
 
     loadCustomer();
   };
@@ -73,21 +221,15 @@ function CustomerDashboard() {
     return invoices.find((invoice) => invoice.booking_id === bookingId);
   };
 
-  const getPhotoLinks = (message = "") => {
-    return message
-      .split(/\s+/)
-      .filter((text) => text.startsWith("https://"));
-  };
-
   const cleanMessage = (message = "") => {
-    return message
+    return String(message)
       .replace(/https:\/\/\S+/g, "")
       .replace("Uploaded photos:", "")
       .trim();
   };
 
   const formatDate = (date) => {
-    if (!date) return "Date unavailable";
+    if (!date) return "Not selected";
 
     return new Date(date).toLocaleDateString("en-GB", {
       day: "2-digit",
@@ -103,23 +245,20 @@ function CustomerDashboard() {
   const getStatusStyle = (status) => {
     switch (status) {
       case "confirmed":
-        return { backgroundColor: "#e8f5e9", color: "#2e7d32" };
+        return { backgroundColor: "#dcfce7", color: "#166534" };
       case "completed":
-        return { backgroundColor: "#d7ffd9", color: "#1b5e20" };
+        return { backgroundColor: "#dbeafe", color: "#1e40af" };
       case "cancelled":
-        return { backgroundColor: "#ffebee", color: "#c62828" };
+        return { backgroundColor: "#fee2e2", color: "#991b1b" };
       default:
-        return { backgroundColor: "#e3f2fd", color: "#1565c0" };
+        return { backgroundColor: "#fef3c7", color: "#92400e" };
     }
   };
 
   const getInvoiceStatusStyle = (status) => {
-    switch (status) {
-      case "paid":
-        return { backgroundColor: "#e8f5e9", color: "#2e7d32" };
-      default:
-        return { backgroundColor: "#fff3e0", color: "#ef6c00" };
-    }
+    return status === "paid"
+      ? { backgroundColor: "#dcfce7", color: "#166534" }
+      : { backgroundColor: "#ffedd5", color: "#c2410c" };
   };
 
   const handlePayment = (invoice) => {
@@ -131,165 +270,244 @@ function CustomerDashboard() {
     alert("Payment link has not been added yet.");
   };
 
+  if (isLoading) {
+    return <div style={loadingPage}>Loading your dashboard...</div>;
+  }
+
   return (
     <div style={page}>
       <header style={header}>
         <div>
-          <h1 style={title}>Customer Dashboard</h1>
-          <p style={subtitle}>View your bookings, invoices and account details.</p>
+          <p style={eyebrow}>Customer Portal</p>
+          <h1 style={title}>Welcome, {profile?.full_name || "Customer"}</h1>
+          <p style={subtitle}>
+            Request a quote, choose a preferred date, and track your bookings.
+          </p>
         </div>
 
-        <div style={headerButtons}>
-          <Link to="/" style={servicesButton}>
-            Go to Services
-          </Link>
-
-          <button onClick={logout} style={logoutButton}>
-            Logout
-          </button>
-        </div>
+        <button onClick={logout} style={logoutButton}>
+          Logout
+        </button>
       </header>
 
       <main style={main}>
-        <section style={detailsCard}>
-          <h2 style={sectionTitle}>My Details</h2>
+        <section style={requestCard}>
+          <div style={sectionTop}>
+            <div>
+              <h2 style={sectionTitle}>Request a Quote</h2>
+              <p style={mutedText}>
+                Choose the service you need and select your preferred date.
+              </p>
+            </div>
+          </div>
 
-          {profile ? (
-            <>
-              <div style={detailsGrid}>
-                <p><strong>Name:</strong> {profile.full_name}</p>
-                <p><strong>Email:</strong> {profile.email}</p>
-                <p><strong>Phone:</strong> {profile.phone}</p>
-                <p><strong>Address:</strong> {profile.address || "Not added yet"}</p>
-                <p><strong>Postcode:</strong> {profile.postcode || "Not added yet"}</p>
-              </div>
+          <form onSubmit={submitRequest} style={requestGrid}>
+            <select
+              name="service"
+              value={requestForm.service}
+              onChange={handleRequestChange}
+              style={input}
+              required
+            >
+              <option value="">Choose a service</option>
+              {services.map((service) => (
+                <option key={service} value={service}>
+                  {service}
+                </option>
+              ))}
+            </select>
 
+            <input
+              type="date"
+              name="preferred_date"
+              value={requestForm.preferred_date}
+              onChange={handleRequestChange}
+              style={input}
+              required
+            />
+
+            <textarea
+              name="message"
+              placeholder="Tell us what you need..."
+              value={requestForm.message}
+              onChange={handleRequestChange}
+              style={textarea}
+            />
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handlePhotos}
+              style={input}
+              />
+
+            <button type="submit" style={primaryButton} disabled={isSubmitting}>
+              {isSubmitting ? "Sending..." : "Send Quote Request"}
+            </button>
+          </form>
+
+          {statusMessage && <p style={statusMessageStyle}>{statusMessage}</p>}
+        </section>
+
+        <section style={summaryGrid}>
+          <div style={summaryCard}>
+            <span style={summaryLabel}>Bookings</span>
+            <strong style={summaryNumber}>{bookings.length}</strong>
+          </div>
+
+          <div style={summaryCard}>
+            <span style={summaryLabel}>Confirmed</span>
+            <strong style={summaryNumber}>
+              {bookings.filter((b) => b.status === "confirmed").length}
+            </strong>
+          </div>
+
+          <div style={summaryCard}>
+            <span style={summaryLabel}>Invoices</span>
+            <strong style={summaryNumber}>{invoices.length}</strong>
+          </div>
+        </section>
+
+        <section style={contentGrid}>
+          <div style={card}>
+            <div style={cardHeader}>
+              <h2 style={sectionTitle}>My Details</h2>
               <button
                 onClick={() => navigate("/edit-profile")}
                 style={editButton}
               >
-                Edit Details
+                Edit
               </button>
-            </>
-          ) : (
-            <p style={emptyText}>Loading profile...</p>
-          )}
+            </div>
+
+            <div style={detailsGrid}>
+              <Info label="Name" value={profile?.full_name} />
+              <Info label="Email" value={profile?.email || user?.email} />
+              <Info label="Phone" value={profile?.phone} />
+              <Info label="Address" value={profile?.address} />
+              <Info label="Postcode" value={profile?.postcode} />
+            </div>
+          </div>
+
+          <div style={card}>
+            <h2 style={sectionTitle}>Latest Invoice</h2>
+
+            {invoices.length === 0 ? (
+              <p style={emptyText}>No invoices yet.</p>
+            ) : (
+              <div style={invoiceMini}>
+                <div>
+                  <strong>{invoices[0].service}</strong>
+                  <p style={mutedText}>{formatMoney(invoices[0].amount)}</p>
+                </div>
+
+                <span
+                  style={{
+                    ...badge,
+                    ...getInvoiceStatusStyle(invoices[0].status),
+                  }}
+                >
+                  {invoices[0].status || "unpaid"}
+                </span>
+              </div>
+            )}
+          </div>
         </section>
 
         <section style={card}>
-          <h2 style={sectionTitle}>My Bookings</h2>
+          <div style={cardHeader}>
+            <h2 style={sectionTitle}>My Bookings</h2>
+          </div>
 
           {bookings.length === 0 ? (
-            <p style={emptyText}>No bookings yet.</p>
+            <div style={emptyBox}>
+              <h3>No bookings yet</h3>
+              <p>Send your first quote request using the form above.</p>
+            </div>
           ) : (
-            bookings.map((booking) => {
-              const invoice = getInvoiceForBooking(booking.id);
-              const photoLinks = getPhotoLinks(booking.message);
-              const readableMessage = cleanMessage(booking.message);
+            <div style={bookingList}>
+              {bookings.map((booking) => {
+                const invoice = getInvoiceForBooking(booking.id);
+                const readableMessage = cleanMessage(booking.message);
 
-              return (
-                <div key={booking.id} style={bookingCard}>
-                  <div style={bookingHeader}>
-                    <div>
-                      <h3 style={bookingTitle}>{booking.service}</h3>
-                      <p style={dateText}>
-                        Requested on {formatDate(booking.created_at)}
-                      </p>
+                return (
+                  <article key={booking.id} style={bookingCard}>
+                    <div style={bookingTop}>
+                      <div>
+                        <h3 style={bookingTitle}>{booking.service}</h3>
+                        <p style={dateText}>
+                          Preferred date:{" "}
+                          {formatDate(
+                            booking.preferred_date || booking.created_at
+                          )}
+                        </p>
+                      </div>
+
+                      <span
+                        style={{
+                          ...badge,
+                          ...getStatusStyle(booking.status),
+                        }}
+                      >
+                        {booking.status || "new"}
+                      </span>
                     </div>
 
-                    <span
-                      style={{
-                        ...statusBadge,
-                        ...getStatusStyle(booking.status),
-                      }}
-                    >
-                      {booking.status || "new"}
-                    </span>
-                  </div>
+                    <div style={bookingDetails}>
+                      <Info label="Address" value={booking.address} />
+                      <Info label="Postcode" value={booking.postcode} />
+                    </div>
 
-                  <div style={bookingDetails}>
-                    <p><strong>Address:</strong> {booking.address}</p>
-                    <p><strong>Postcode:</strong> {booking.postcode}</p>
-                  </div>
-
-                  {invoice ? (
-                    <div style={invoiceBox}>
-                      <div style={invoiceHeader}>
+                    {invoice && (
+                      <div style={invoiceBox}>
                         <div>
-                          <h4 style={invoiceTitle}>Invoice #{invoice.id}</h4>
-                          <p><strong>Amount:</strong> {formatMoney(invoice.amount)}</p>
-                          {invoice.notes && (
-                            <p><strong>Notes:</strong> {invoice.notes}</p>
-                          )}
+                          <strong>Invoice</strong>
+                          <p style={mutedText}>{formatMoney(invoice.amount)}</p>
                         </div>
 
-                        <span
-                          style={{
-                            ...invoiceBadge,
-                            ...getInvoiceStatusStyle(invoice.status),
-                          }}
-                        >
-                          {invoice.status || "unpaid"}
-                        </span>
-                      </div>
-
-                      <button
-                        onClick={() => window.open(invoice.payment_link, "_blank")}
-                        style={paymentButton}
-                        disabled={invoice.status === "paid"}
-                      >
-                        {invoice.status === "paid" ? "Paid" : "Pay Invoice"}
-                      </button>
-                    </div>
-                  ) : (
-                    booking.status === "confirmed" && (
-                      <div style={invoicePendingBox}>
-                        Invoice pending. The business will send your invoice soon.
-                      </div>
-                    )
-                  )}
-
-                  {readableMessage && (
-                    <div style={messageBox}>
-                      <strong>Request details</strong>
-                      <p style={messageText}>{readableMessage}</p>
-                    </div>
-                  )}
-
-                  {photoLinks.length > 0 && (
-                    <div style={photoBox}>
-                      <strong>Photos</strong>
-
-                      <div style={photoLinksBox}>
-                        {photoLinks.map((link, index) => (
-                          <a
-                            key={link}
-                            href={link}
-                            target="_blank"
-                            rel="noreferrer"
-                            style={photoLink}
+                        <div style={invoiceActions}>
+                          <span
+                            style={{
+                              ...badge,
+                              ...getInvoiceStatusStyle(invoice.status),
+                            }}
                           >
-                            View photo {index + 1}
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                            {invoice.status || "unpaid"}
+                          </span>
 
-                  {booking.status !== "cancelled" &&
-                    booking.status !== "completed" && (
-                      <div style={bookingActions}>
-                        <button
-                          onClick={() => cancelBooking(booking.id)}
-                          style={cancelButton}
-                        >
-                          Cancel booking
-                        </button>
+                          <button
+                            onClick={() => handlePayment(invoice)}
+                            style={paymentButton}
+                            disabled={invoice.status === "paid"}
+                          >
+                            {invoice.status === "paid" ? "Paid" : "Pay"}
+                          </button>
+                        </div>
                       </div>
                     )}
-                </div>
-              );
-            })
+
+                    {readableMessage && (
+                      <details style={detailsBox}>
+                        <summary style={detailsSummary}>Request details</summary>
+                        <p style={messageText}>{readableMessage}</p>
+                      </details>
+                    )}
+
+                    {booking.status !== "cancelled" &&
+                      booking.status !== "completed" && (
+                        <div style={bookingActions}>
+                          <button
+                            onClick={() => cancelBooking(booking.id)}
+                            style={cancelButton}
+                          >
+                            Cancel booking
+                          </button>
+                        </div>
+                      )}
+                  </article>
+                );
+              })}
+            </div>
           )}
         </section>
       </main>
@@ -297,95 +515,213 @@ function CustomerDashboard() {
   );
 }
 
-const page = {
+function Info({ label, value }) {
+  return (
+    <div style={infoItem}>
+      <span style={infoLabel}>{label}</span>
+      <strong>{value || "Not provided"}</strong>
+    </div>
+  );
+}
+
+const loadingPage = {
   minHeight: "100vh",
   backgroundColor: "#f5f7fb",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
   fontFamily: "Arial",
-  color: "#1c2b44",
+  fontSize: "20px",
+  fontWeight: "bold",
+};
+
+const page = {
+  minHeight: "100vh",
+  backgroundColor: "#f4f7fb",
+  fontFamily: "Arial",
+  color: "#17233b",
 };
 
 const header = {
-  backgroundColor: "white",
-  padding: "26px 40px",
+  backgroundColor: "#071d33",
+  color: "white",
+  padding: "34px 40px",
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  boxShadow: "0 2px 10px rgba(0,0,0,0.06)",
   gap: "20px",
   flexWrap: "wrap",
 };
 
-const headerButtons = {
-  display: "flex",
-  gap: "12px",
-  alignItems: "center",
-  flexWrap: "wrap",
+const eyebrow = {
+  margin: "0 0 8px",
+  color: "#56d7e6",
+  fontWeight: "bold",
 };
 
 const title = {
   fontSize: "34px",
   margin: 0,
+  color: "white",
 };
 
 const subtitle = {
-  margin: "8px 0 0",
-  color: "#5b6b84",
-};
-
-const servicesButton = {
-  padding: "11px 20px",
-  borderRadius: "12px",
-  backgroundColor: "#00BCD4",
-  color: "white",
-  textDecoration: "none",
-  fontWeight: "bold",
+  margin: "10px 0 0",
+  color: "#cbd5e1",
 };
 
 const logoutButton = {
-  padding: "11px 20px",
+  padding: "12px 20px",
   border: "none",
   borderRadius: "12px",
-  backgroundColor: "#111",
+  backgroundColor: "#111827",
   color: "white",
   fontWeight: "bold",
   cursor: "pointer",
 };
 
 const main = {
-  maxWidth: "1050px",
+  maxWidth: "1100px",
   margin: "0 auto",
-  padding: "40px 20px",
+  padding: "28px 20px",
+};
+
+const requestCard = {
+  backgroundColor: "white",
+  padding: "24px",
+  borderRadius: "20px",
+  marginBottom: "20px",
+  boxShadow: "0 8px 24px rgba(15,23,42,0.08)",
+};
+
+const sectionTop = {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: "16px",
+};
+
+const sectionTitle = {
+  margin: 0,
+  fontSize: "24px",
+};
+
+const mutedText = {
+  color: "#64748b",
+  margin: "6px 0 0",
+};
+
+const requestGrid = {
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr",
+  gap: "14px",
+  marginTop: "18px",
+};
+
+const input = {
+  padding: "14px",
+  borderRadius: "12px",
+  border: "1px solid #d4dde7",
+  fontSize: "15px",
+};
+
+const textarea = {
+  gridColumn: "1 / -1",
+  padding: "14px",
+  borderRadius: "12px",
+  border: "1px solid #d4dde7",
+  fontSize: "15px",
+  minHeight: "90px",
+};
+
+const primaryButton = {
+  gridColumn: "1 / -1",
+  padding: "14px 20px",
+  borderRadius: "12px",
+  backgroundColor: "#00a9bd",
+  color: "white",
+  fontWeight: "bold",
+  border: "none",
+  cursor: "pointer",
+  fontSize: "16px",
+};
+
+const statusMessageStyle = {
+  marginTop: "12px",
+  color: "#00a9bd",
+  fontWeight: "bold",
+};
+
+const summaryGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+  gap: "16px",
+  marginBottom: "20px",
+};
+
+const summaryCard = {
+  backgroundColor: "white",
+  padding: "20px",
+  borderRadius: "18px",
+  boxShadow: "0 8px 24px rgba(15,23,42,0.08)",
+  textAlign: "center",
+};
+
+const summaryLabel = {
+  color: "#64748b",
+  display: "block",
+  marginBottom: "8px",
+};
+
+const summaryNumber = {
+  fontSize: "30px",
+};
+
+const contentGrid = {
+  display: "grid",
+  gridTemplateColumns: "2fr 1fr",
+  gap: "20px",
+  marginBottom: "20px",
 };
 
 const card = {
   backgroundColor: "white",
-  padding: "28px",
+  padding: "24px",
   borderRadius: "20px",
-  marginBottom: "28px",
-  boxShadow: "0 6px 18px rgba(0,0,0,0.07)",
+  boxShadow: "0 8px 24px rgba(15,23,42,0.08)",
 };
 
-const detailsCard = {
-  ...card,
-};
-
-const sectionTitle = {
-  fontSize: "28px",
-  marginTop: 0,
-  textAlign: "center",
+const cardHeader = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: "12px",
+  marginBottom: "18px",
 };
 
 const detailsGrid = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-  gap: "12px 25px",
+  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+  gap: "14px",
+};
+
+const infoItem = {
+  backgroundColor: "#f8fafc",
+  padding: "14px",
+  borderRadius: "14px",
+  display: "flex",
+  flexDirection: "column",
+  gap: "5px",
+};
+
+const infoLabel = {
+  color: "#64748b",
+  fontSize: "13px",
+  fontWeight: "bold",
 };
 
 const editButton = {
-  display: "block",
-  margin: "18px auto 0",
-  padding: "10px 18px",
-  backgroundColor: "#00BCD4",
+  padding: "9px 14px",
+  backgroundColor: "#00a9bd",
   color: "white",
   border: "none",
   borderRadius: "10px",
@@ -393,156 +729,130 @@ const editButton = {
   cursor: "pointer",
 };
 
-const emptyText = {
+const invoiceMini = {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: "10px",
+  alignItems: "center",
+  backgroundColor: "#f8fafc",
+  padding: "16px",
+  borderRadius: "14px",
+};
+
+const badge = {
+  padding: "8px 13px",
+  borderRadius: "999px",
+  fontSize: "13px",
+  fontWeight: "bold",
+  textTransform: "capitalize",
+};
+
+const emptyBox = {
+  backgroundColor: "#f8fafc",
+  padding: "26px",
+  borderRadius: "18px",
   textAlign: "center",
-  color: "#5b6b84",
+  color: "#64748b",
+};
+
+const emptyText = {
+  color: "#64748b",
+};
+
+const bookingList = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "16px",
 };
 
 const bookingCard = {
-  backgroundColor: "#f5f7fb",
-  padding: "24px",
+  backgroundColor: "#f8fafc",
+  padding: "18px",
   borderRadius: "18px",
-  marginTop: "18px",
+  border: "1px solid #e2e8f0",
 };
 
-const bookingHeader = {
+const bookingTop = {
   display: "flex",
   justifyContent: "space-between",
-  gap: "15px",
   alignItems: "flex-start",
+  gap: "14px",
+  marginBottom: "14px",
 };
 
 const bookingTitle = {
   margin: 0,
-  fontSize: "24px",
+  fontSize: "21px",
 };
 
 const dateText = {
-  margin: "7px 0 0",
-  color: "#5b6b84",
-  fontSize: "14px",
-};
-
-const statusBadge = {
-  padding: "8px 14px",
-  borderRadius: "999px",
-  fontSize: "13px",
-  fontWeight: "bold",
-  textTransform: "capitalize",
+  color: "#64748b",
+  margin: "6px 0 0",
 };
 
 const bookingDetails = {
-  backgroundColor: "white",
-  padding: "16px",
-  borderRadius: "14px",
-  marginTop: "16px",
-  textAlign: "center",
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+  gap: "12px",
 };
 
 const invoiceBox = {
+  marginTop: "14px",
   backgroundColor: "white",
-  padding: "18px",
-  borderRadius: "16px",
-  marginTop: "16px",
-  borderLeft: "5px solid #4CAF50",
-  boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-};
-
-const invoiceHeader = {
+  padding: "16px",
+  borderRadius: "14px",
   display: "flex",
   justifyContent: "space-between",
   gap: "14px",
-  alignItems: "flex-start",
+  alignItems: "center",
+  borderLeft: "4px solid #16a34a",
+};
+
+const invoiceActions = {
+  display: "flex",
+  gap: "10px",
+  alignItems: "center",
   flexWrap: "wrap",
 };
 
-const invoiceTitle = {
-  margin: "0 0 8px",
-  fontSize: "22px",
-};
-
-const invoiceBadge = {
-  padding: "8px 14px",
-  borderRadius: "999px",
-  fontSize: "13px",
+const paymentButton = {
+  padding: "10px 14px",
+  border: "none",
+  borderRadius: "10px",
+  backgroundColor: "#16a34a",
+  color: "white",
   fontWeight: "bold",
-  textTransform: "capitalize",
+  cursor: "pointer",
 };
 
-const invoicePendingBox = {
-  backgroundColor: "#fff3e0",
-  color: "#ef6c00",
-  padding: "14px",
-  borderRadius: "12px",
-  marginTop: "16px",
-  fontWeight: "bold",
-  textAlign: "center",
-};
-
-const messageBox = {
-  backgroundColor: "white",
-  padding: "18px",
-  borderRadius: "14px",
+const detailsBox = {
   marginTop: "14px",
-  textAlign: "center",
+  backgroundColor: "white",
+  padding: "14px",
+  borderRadius: "14px",
+};
+
+const detailsSummary = {
+  cursor: "pointer",
+  fontWeight: "bold",
 };
 
 const messageText = {
   whiteSpace: "pre-line",
   lineHeight: "1.6",
-  marginBottom: 0,
-};
-
-const photoBox = {
-  backgroundColor: "white",
-  padding: "18px",
-  borderRadius: "14px",
-  marginTop: "14px",
-  textAlign: "center",
-};
-
-const photoLinksBox = {
-  display: "flex",
-  gap: "10px",
-  flexWrap: "wrap",
-  justifyContent: "center",
-  marginTop: "10px",
-};
-
-const photoLink = {
-  backgroundColor: "#00BCD4",
-  color: "white",
-  padding: "10px 14px",
-  borderRadius: "10px",
-  textDecoration: "none",
-  fontSize: "14px",
-  fontWeight: "bold",
 };
 
 const bookingActions = {
   display: "flex",
-  justifyContent: "center",
-  gap: "12px",
-  flexWrap: "wrap",
-  marginTop: "18px",
-};
-
-const paymentButton = {
+  justifyContent: "flex-end",
   marginTop: "14px",
-  padding: "12px 20px",
-  border: "none",
-  borderRadius: "10px",
-  backgroundColor: "#4CAF50",
-  color: "white",
-  fontWeight: "bold",
-  cursor: "pointer",
 };
 
 const cancelButton = {
-  padding: "12px 18px",
+  padding: "10px 14px",
   border: "none",
   borderRadius: "10px",
-  backgroundColor: "#f44336",
+  backgroundColor: "#dc2626",
   color: "white",
   fontWeight: "bold",
   cursor: "pointer",

@@ -27,6 +27,20 @@ function Navbar() {
     setUser(session?.user || null);
   };
 
+ const logout = async () => {
+  await supabase.auth.signOut({ scope: "global" });
+
+  Object.keys(localStorage).forEach((key) => {
+    localStorage.removeItem(key);
+  });
+
+  Object.keys(sessionStorage).forEach((key) => {
+    sessionStorage.removeItem(key);
+  });
+
+  window.location.replace("/login");
+};
+
   return (
     <header style={nav}>
       <div style={logoSection}>
@@ -39,19 +53,25 @@ function Navbar() {
 
           <span style={divider}>|</span>
 
-          <a
-            href="mailto:environfacilities@gmail.com"
-            style={link}
-          >
+          <a href="mailto:environfacilities@gmail.com" style={link}>
             environfacilities@gmail.com
           </a>
         </div>
       </div>
 
       {user ? (
-        <Link to="/customer-dashboard" style={accountButton}>
-          My Account
-        </Link>
+        <div style={buttonGroup}>
+          <Link to="/customer-dashboard" style={accountButton}>
+            My Account
+          </Link>
+
+          <button
+            onClick={logout}
+            style={logoutButton}
+            >
+            Logout
+          </button>
+        </div>
       ) : (
         <Link to="/login" style={loginButton}>
           Login
@@ -105,6 +125,12 @@ const divider = {
   color: "#cbd5e1",
 };
 
+const buttonGroup = {
+  display: "flex",
+  gap: "10px",
+  alignItems: "center",
+};
+
 const loginButton = {
   backgroundColor: "#06b6d4",
   color: "white",
@@ -123,6 +149,17 @@ const accountButton = {
   borderRadius: "10px",
   fontWeight: "700",
   fontSize: "14px",
+};
+
+const logoutButton = {
+  backgroundColor: "#ef4444",
+  color: "white",
+  border: "none",
+  padding: "10px 20px",
+  borderRadius: "10px",
+  fontWeight: "700",
+  fontSize: "14px",
+  cursor: "pointer",
 };
 
 export default Navbar;

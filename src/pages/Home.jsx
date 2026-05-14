@@ -4,16 +4,26 @@ import Navbar from "../components/Navbar";
 
 function Home() {
   const services = [
-    { title: "Domestic Cleaning", path: "/domestic-cleaning" },
-    { title: "Commercial Cleaning", path: "/commercial-cleaning" },
-    { title: "End of Tenancy Cleaning", path: "/end-of-tenancy-cleaning" },
-    { title: "Carpet Cleaning", path: "/carpet-cleaning" },
-    { title: "Window Cleaning", path: "/window-cleaning" },
-    { title: "High Pressure Jet Wash", path: "/jet-wash" },
-    { title: "Garden Maintenance", path: "/garden-maintenance" },
-    { title: "Property Maintenance", path: "/property-maintenance" },
-    { title: "Building Management Support", path: "/building-management" },
-    { title: "Cleaning Operatives", path: "/cleaning-operatives" },
+    {
+      title: "High Pressure Jet Wash",
+      path: "/jet-wash",
+      text: "Driveways, patios, walls, entrances and external surfaces cleaned professionally.",
+    },
+    {
+      title: "Garden Maintenance",
+      path: "/garden-maintenance",
+      text: "Regular garden care, trimming, clearing, lawn care and outdoor maintenance.",
+    },
+    {
+      title: "Property Maintenance",
+      path: "/property-maintenance",
+      text: "General repairs, upkeep, minor fixes and property support for homes and businesses.",
+    },
+    {
+      title: "Building Management Support",
+      path: "/building-management",
+      text: "Support for landlords, agencies, communal areas and managed buildings.",
+    },
   ];
 
   return (
@@ -22,17 +32,20 @@ function Home() {
 
       <section style={heroSection}>
         <div style={heroText}>
-          <p style={tagline}>Cleaning & Property Services in London</p>
+          <p style={tagline}>Property Care & Outdoor Maintenance in London</p>
 
-          <h1 style={heroTitle}>Fast quotes. Reliable service.</h1>
+          <h1 style={heroTitle}>
+            Professional maintenance for homes, gardens and buildings.
+          </h1>
 
           <p style={heroSubtitle}>
-            Choose a service, send your request, and we’ll get back to you with
-            a clear quote.
+            Environ Facilities provides reliable jet washing, garden
+            maintenance, property maintenance and building management support
+            across London.
           </p>
 
           <a href="#services" style={primaryButton}>
-            Request a Quote
+            Get a Free Quote
           </a>
         </div>
 
@@ -42,35 +55,45 @@ function Home() {
       </section>
 
       <section id="services" style={servicesSection}>
-        <h2 style={sectionTitle}>Choose a service</h2>
+        <h2 style={sectionTitle}>Our Core Services</h2>
 
         <div style={servicesGrid}>
           {services.map((service) => (
             <Link key={service.title} to={service.path} style={serviceCard}>
               <span>{service.title}</span>
-              <small style={cardSmall}>Get quote →</small>
+              <p style={serviceText}>{service.text}</p>
+              <small style={cardSmall}>Request quote →</small>
             </Link>
           ))}
         </div>
       </section>
 
       <section style={whySection}>
-        <h2 style={sectionTitle}>Simple process</h2>
+        <h2 style={sectionTitle}>How We Work</h2>
 
         <div style={whyGrid}>
           <div style={whyCard}>
-            <h3>1. Choose service</h3>
-            <p>Select the cleaning or property service you need.</p>
+            <h3>1. Tell us what you need</h3>
+            <p>
+              Choose your service, send your details and upload photos if
+              required.
+            </p>
           </div>
 
           <div style={whyCard}>
-            <h3>2. Send request</h3>
-            <p>Fill in your details and upload photos if needed.</p>
+            <h3>2. We review the request</h3>
+            <p>
+              Our team checks the job details and prepares a clear quote for
+              you.
+            </p>
           </div>
 
           <div style={whyCard}>
-            <h3>3. Receive quote</h3>
-            <p>We’ll reply with a clear quote as soon as possible.</p>
+            <h3>3. Work is scheduled</h3>
+            <p>
+              Once approved, we arrange the service and complete the job
+              professionally.
+            </p>
           </div>
         </div>
       </section>
@@ -90,6 +113,14 @@ function Home() {
     </div>
   );
 }
+
+const serviceText = {
+  color: "#64748b",
+  fontSize: "14px",
+  lineHeight: "1.5",
+  fontWeight: "normal",
+  margin: "4px 0",
+};
 
 const page = {
   backgroundColor: "#f5f7fb",
@@ -174,20 +205,20 @@ const sectionTitle = {
 
 const servicesGrid = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
-  gap: "14px",
+  gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
+  gap: "18px",
   maxWidth: "1000px",
   margin: "0 auto",
 };
 
 const serviceCard = {
   backgroundColor: "#f5f7fb",
-  padding: "18px",
-  borderRadius: "14px",
+  padding: "22px",
+  borderRadius: "16px",
   color: "#1c2b44",
   textDecoration: "none",
   fontWeight: "bold",
-  fontSize: "16px",
+  fontSize: "17px",
   display: "flex",
   flexDirection: "column",
   gap: "10px",
@@ -206,15 +237,15 @@ const whySection = {
 const whyGrid = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-  gap: "14px",
+  gap: "18px",
   maxWidth: "900px",
   margin: "0 auto",
 };
 
 const whyCard = {
   backgroundColor: "white",
-  padding: "20px",
-  borderRadius: "16px",
+  padding: "24px",
+  borderRadius: "18px",
   boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
   lineHeight: "1.5",
   textAlign: "center",

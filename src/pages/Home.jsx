@@ -68,35 +68,23 @@ function Home() {
         </div>
       </section>
 
-      <section style={whySection}>
-        <h2 style={sectionTitle}>How We Work</h2>
+      <section style={aboutSection}>
+  <div style={aboutBox}>
+    <h2 style={sectionTitle}>About Environ Facilities</h2>
 
-        <div style={whyGrid}>
-          <div style={whyCard}>
-            <h3>1. Tell us what you need</h3>
-            <p>
-              Choose your service, send your details and upload photos if
-              required.
-            </p>
-          </div>
+    <p style={aboutText}>
+      Environ Facilities provides reliable outdoor and property maintenance
+      services across London. We focus on high pressure jet washing, garden
+      maintenance, property maintenance and building management support.
+    </p>
 
-          <div style={whyCard}>
-            <h3>2. We review the request</h3>
-            <p>
-              Our team checks the job details and prepares a clear quote for
-              you.
-            </p>
-          </div>
-
-          <div style={whyCard}>
-            <h3>3. Work is scheduled</h3>
-            <p>
-              Once approved, we arrange the service and complete the job
-              professionally.
-            </p>
-          </div>
-        </div>
-      </section>
+    <p style={aboutText}>
+      Our aim is to make property care simple, professional and easy to manage.
+      Customers can request a quote online, send photos of the job, and receive
+      a clear response from our team.
+    </p>
+  </div>
+</section>
 
       <footer style={footer}>
         <strong>© Environ Facilities</strong>
@@ -230,27 +218,6 @@ const cardSmall = {
   color: "#00BCD4",
 };
 
-const whySection = {
-  padding: "45px 20px",
-};
-
-const whyGrid = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-  gap: "18px",
-  maxWidth: "900px",
-  margin: "0 auto",
-};
-
-const whyCard = {
-  backgroundColor: "white",
-  padding: "24px",
-  borderRadius: "18px",
-  boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-  lineHeight: "1.5",
-  textAlign: "center",
-};
-
 const footer = {
   textAlign: "center",
   padding: "24px 20px",
@@ -270,6 +237,28 @@ const whatsappButton = {
   textDecoration: "none",
   boxShadow: "0 4px 12px rgba(0,0,0,0.18)",
   fontSize: "15px",
+};
+
+const aboutSection = {
+  padding: "55px 20px",
+  backgroundColor: "#f5f7fb",
+};
+
+const aboutBox = {
+  maxWidth: "850px",
+  margin: "0 auto",
+  backgroundColor: "white",
+  padding: "34px",
+  borderRadius: "20px",
+  boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
+  textAlign: "center",
+};
+
+const aboutText = {
+  color: "#5b6b84",
+  fontSize: "17px",
+  lineHeight: "1.7",
+  margin: "14px 0",
 };
 
 export default Home;

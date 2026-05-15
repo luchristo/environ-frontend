@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import hero from "../assets/hero.png";
 import Navbar from "../components/Navbar";
+import BeforeAfterGallery from "../components/BeforeAfterGallery";
 
 function Home() {
   const services = [
@@ -39,9 +40,8 @@ function Home() {
           </h1>
 
           <p style={heroSubtitle}>
-            Environ Facilities provides reliable jet washing, garden
-            maintenance, property maintenance and building management support
-            across London.
+            Reliable jet washing, garden maintenance, property maintenance and
+            building management support across London.
           </p>
 
           <a href="#services" style={primaryButton}>
@@ -68,23 +68,25 @@ function Home() {
         </div>
       </section>
 
+      <BeforeAfterGallery />
+
       <section style={aboutSection}>
-  <div style={aboutBox}>
-    <h2 style={sectionTitle}>About Environ Facilities</h2>
+        <div style={aboutBox}>
+          <h2 style={sectionTitle}>About Environ Facilities</h2>
 
-    <p style={aboutText}>
-      Environ Facilities provides reliable outdoor and property maintenance
-      services across London. We focus on high pressure jet washing, garden
-      maintenance, property maintenance and building management support.
-    </p>
+          <p style={aboutText}>
+            Environ Facilities provides reliable outdoor and property maintenance
+            services across London. We focus on high pressure jet washing, garden
+            maintenance, property maintenance and building management support.
+          </p>
 
-    <p style={aboutText}>
-      Our aim is to make property care simple, professional and easy to manage.
-      Customers can request a quote online, send photos of the job, and receive
-      a clear response from our team.
-    </p>
-  </div>
-</section>
+          <p style={aboutText}>
+            Our aim is to make property care simple, professional and easy to
+            manage. Customers can request a quote online, send photos of the job,
+            and receive a clear response from our team.
+          </p>
+        </div>
+      </section>
 
       <footer style={footer}>
         <strong>© Environ Facilities</strong>
@@ -102,14 +104,6 @@ function Home() {
   );
 }
 
-const serviceText = {
-  color: "#64748b",
-  fontSize: "14px",
-  lineHeight: "1.5",
-  fontWeight: "normal",
-  margin: "4px 0",
-};
-
 const page = {
   backgroundColor: "#f5f7fb",
   minHeight: "100vh",
@@ -120,44 +114,46 @@ const page = {
 const heroSection = {
   display: "grid",
   gridTemplateColumns: "1fr 1fr",
-  gap: "22px",
+  gap: "30px",
   alignItems: "center",
-  maxWidth: "1050px",
-  margin: "0 auto",
-  padding: "42px 20px",
+  maxWidth: "1180px",
+  margin: "35px auto 45px",
+  padding: "28px 30px",
+  backgroundColor: "white",
+  borderRadius: "24px",
+  boxShadow: "0 12px 35px rgba(15,23,42,0.10)",
 };
 
 const heroText = {
-  backgroundColor: "white",
-  padding: "30px",
-  borderRadius: "20px",
-  boxShadow: "0 6px 18px rgba(0,0,0,0.07)",
   textAlign: "center",
+  padding: "25px",
 };
 
 const tagline = {
   color: "#00BCD4",
   fontWeight: "bold",
-  marginBottom: "10px",
+  marginBottom: "14px",
   fontSize: "15px",
 };
 
 const heroTitle = {
   fontSize: "34px",
-  lineHeight: "1.15",
-  margin: "0 0 14px",
+  lineHeight: "1.2",
+  margin: "0 0 18px",
+  color: "#111827",
 };
 
 const heroSubtitle = {
   fontSize: "16px",
-  color: "#5b6b84",
-  lineHeight: "1.5",
-  marginBottom: "22px",
+  color: "#64748b",
+  lineHeight: "1.6",
+  margin: "0 auto 24px",
+  maxWidth: "460px",
 };
 
 const primaryButton = {
   display: "inline-block",
-  padding: "13px 22px",
+  padding: "14px 24px",
   borderRadius: "12px",
   backgroundColor: "#00BCD4",
   color: "white",
@@ -167,46 +163,44 @@ const primaryButton = {
 };
 
 const heroImageBox = {
-  backgroundColor: "white",
   borderRadius: "20px",
   overflow: "hidden",
-  boxShadow: "0 6px 18px rgba(0,0,0,0.07)",
 };
 
 const heroImage = {
   width: "100%",
-  maxHeight: "260px",
+  height: "300px",
   objectFit: "cover",
   display: "block",
 };
 
 const servicesSection = {
-  padding: "45px 20px",
+  padding: "55px 20px",
   backgroundColor: "white",
 };
 
 const sectionTitle = {
   textAlign: "center",
-  fontSize: "28px",
-  margin: "0 0 28px",
+  fontSize: "32px",
+  margin: "0 0 32px",
 };
 
 const servicesGrid = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
   gap: "18px",
-  maxWidth: "1000px",
+  maxWidth: "1050px",
   margin: "0 auto",
 };
 
 const serviceCard = {
   backgroundColor: "#f5f7fb",
-  padding: "22px",
-  borderRadius: "16px",
+  padding: "24px",
+  borderRadius: "18px",
   color: "#1c2b44",
   textDecoration: "none",
   fontWeight: "bold",
-  fontSize: "17px",
+  fontSize: "18px",
   display: "flex",
   flexDirection: "column",
   gap: "10px",
@@ -214,28 +208,16 @@ const serviceCard = {
   textAlign: "center",
 };
 
+const serviceText = {
+  color: "#64748b",
+  fontSize: "15px",
+  lineHeight: "1.5",
+  fontWeight: "normal",
+  margin: "4px 0",
+};
+
 const cardSmall = {
   color: "#00BCD4",
-};
-
-const footer = {
-  textAlign: "center",
-  padding: "24px 20px",
-  backgroundColor: "#1c2b44",
-  color: "white",
-};
-
-const whatsappButton = {
-  position: "fixed",
-  right: "18px",
-  bottom: "18px",
-  backgroundColor: "#25D366",
-  color: "white",
-  padding: "12px 18px",
-  borderRadius: "40px",
-  fontWeight: "bold",
-  textDecoration: "none",
-  boxShadow: "0 4px 12px rgba(0,0,0,0.18)",
   fontSize: "15px",
 };
 
@@ -259,6 +241,27 @@ const aboutText = {
   fontSize: "17px",
   lineHeight: "1.7",
   margin: "14px 0",
+};
+
+const footer = {
+  textAlign: "center",
+  padding: "24px 20px",
+  backgroundColor: "#1c2b44",
+  color: "white",
+};
+
+const whatsappButton = {
+  position: "fixed",
+  right: "18px",
+  bottom: "18px",
+  backgroundColor: "#25D366",
+  color: "white",
+  padding: "12px 18px",
+  borderRadius: "40px",
+  fontWeight: "bold",
+  textDecoration: "none",
+  boxShadow: "0 4px 12px rgba(0,0,0,0.18)",
+  fontSize: "15px",
 };
 
 export default Home;

@@ -1,9 +1,18 @@
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import hero from "../assets/hero.png";
 import Navbar from "../components/Navbar";
 import BeforeAfterGallery from "../components/BeforeAfterGallery";
 
 function Home() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const services = [
     {
       title: "High Pressure Jet Wash",
@@ -31,15 +40,15 @@ function Home() {
     <div style={page}>
       <Navbar />
 
-      <section style={heroSection}>
-        <div style={heroText}>
+      <section style={isMobile ? mobileHeroSection : heroSection}>
+        <div style={isMobile ? mobileHeroText : heroText}>
           <p style={tagline}>Property Care & Outdoor Maintenance in London</p>
 
-          <h1 style={heroTitle}>
+          <h1 style={isMobile ? mobileHeroTitle : heroTitle}>
             Professional maintenance for homes, gardens and buildings.
           </h1>
 
-          <p style={heroSubtitle}>
+          <p style={isMobile ? mobileHeroSubtitle : heroSubtitle}>
             Reliable jet washing, garden maintenance, property maintenance and
             building management support across London.
           </p>
@@ -50,14 +59,14 @@ function Home() {
         </div>
 
         <div style={heroImageBox}>
-          <img src={hero} alt="Environ Facilities" style={heroImage} />
+          <img src={hero} alt="Environ Facilities" style={isMobile ? mobileHeroImage : heroImage} />
         </div>
       </section>
 
       <section id="services" style={servicesSection}>
-        <h2 style={sectionTitle}>Our Core Services</h2>
+        <h2 style={isMobile ? mobileSectionTitle : sectionTitle}>Our Core Services</h2>
 
-        <div style={servicesGrid}>
+        <div style={isMobile ? mobileServicesGrid : servicesGrid}>
           {services.map((service) => (
             <Link key={service.title} to={service.path} style={serviceCard}>
               <span>{service.title}</span>
@@ -71,8 +80,10 @@ function Home() {
       <BeforeAfterGallery />
 
       <section style={aboutSection}>
-        <div style={aboutBox}>
-          <h2 style={sectionTitle}>About Environ Facilities</h2>
+        <div style={isMobile ? mobileAboutBox : aboutBox}>
+          <h2 style={isMobile ? mobileSectionTitle : sectionTitle}>
+            About Environ Facilities
+          </h2>
 
           <p style={aboutText}>
             Environ Facilities provides reliable outdoor and property maintenance
@@ -124,22 +135,45 @@ const heroSection = {
   boxShadow: "0 12px 35px rgba(15,23,42,0.10)",
 };
 
+const mobileHeroSection = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "18px",
+  margin: "18px 14px 28px",
+  padding: "20px",
+  backgroundColor: "white",
+  borderRadius: "20px",
+  boxShadow: "0 8px 24px rgba(15,23,42,0.08)",
+};
+
 const heroText = {
   textAlign: "center",
   padding: "25px",
 };
 
+const mobileHeroText = {
+  textAlign: "center",
+  padding: "8px",
+};
+
 const tagline = {
   color: "#00BCD4",
   fontWeight: "bold",
-  marginBottom: "14px",
-  fontSize: "15px",
+  marginBottom: "12px",
+  fontSize: "14px",
 };
 
 const heroTitle = {
   fontSize: "34px",
   lineHeight: "1.2",
   margin: "0 0 18px",
+  color: "#111827",
+};
+
+const mobileHeroTitle = {
+  fontSize: "25px",
+  lineHeight: "1.2",
+  margin: "0 0 14px",
   color: "#111827",
 };
 
@@ -151,9 +185,16 @@ const heroSubtitle = {
   maxWidth: "460px",
 };
 
+const mobileHeroSubtitle = {
+  fontSize: "14px",
+  color: "#64748b",
+  lineHeight: "1.6",
+  margin: "0 auto 20px",
+};
+
 const primaryButton = {
   display: "inline-block",
-  padding: "14px 24px",
+  padding: "13px 22px",
   borderRadius: "12px",
   backgroundColor: "#00BCD4",
   color: "white",
@@ -163,7 +204,7 @@ const primaryButton = {
 };
 
 const heroImageBox = {
-  borderRadius: "20px",
+  borderRadius: "18px",
   overflow: "hidden",
 };
 
@@ -174,8 +215,15 @@ const heroImage = {
   display: "block",
 };
 
+const mobileHeroImage = {
+  width: "100%",
+  height: "220px",
+  objectFit: "cover",
+  display: "block",
+};
+
 const servicesSection = {
-  padding: "55px 20px",
+  padding: "45px 16px",
   backgroundColor: "white",
 };
 
@@ -183,6 +231,12 @@ const sectionTitle = {
   textAlign: "center",
   fontSize: "32px",
   margin: "0 0 32px",
+};
+
+const mobileSectionTitle = {
+  textAlign: "center",
+  fontSize: "25px",
+  margin: "0 0 24px",
 };
 
 const servicesGrid = {
@@ -193,14 +247,22 @@ const servicesGrid = {
   margin: "0 auto",
 };
 
+const mobileServicesGrid = {
+  display: "grid",
+  gridTemplateColumns: "1fr",
+  gap: "14px",
+  maxWidth: "100%",
+  margin: "0 auto",
+};
+
 const serviceCard = {
   backgroundColor: "#f5f7fb",
-  padding: "24px",
+  padding: "22px",
   borderRadius: "18px",
   color: "#1c2b44",
   textDecoration: "none",
   fontWeight: "bold",
-  fontSize: "18px",
+  fontSize: "17px",
   display: "flex",
   flexDirection: "column",
   gap: "10px",
@@ -210,7 +272,7 @@ const serviceCard = {
 
 const serviceText = {
   color: "#64748b",
-  fontSize: "15px",
+  fontSize: "14px",
   lineHeight: "1.5",
   fontWeight: "normal",
   margin: "4px 0",
@@ -222,7 +284,7 @@ const cardSmall = {
 };
 
 const aboutSection = {
-  padding: "55px 20px",
+  padding: "45px 16px",
   backgroundColor: "#f5f7fb",
 };
 
@@ -236,9 +298,17 @@ const aboutBox = {
   textAlign: "center",
 };
 
+const mobileAboutBox = {
+  backgroundColor: "white",
+  padding: "24px 18px",
+  borderRadius: "18px",
+  boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
+  textAlign: "center",
+};
+
 const aboutText = {
   color: "#5b6b84",
-  fontSize: "17px",
+  fontSize: "15px",
   lineHeight: "1.7",
   margin: "14px 0",
 };
@@ -252,16 +322,16 @@ const footer = {
 
 const whatsappButton = {
   position: "fixed",
-  right: "18px",
-  bottom: "18px",
+  right: "14px",
+  bottom: "14px",
   backgroundColor: "#25D366",
   color: "white",
-  padding: "12px 18px",
+  padding: "11px 16px",
   borderRadius: "40px",
   fontWeight: "bold",
   textDecoration: "none",
   boxShadow: "0 4px 12px rgba(0,0,0,0.18)",
-  fontSize: "15px",
+  fontSize: "14px",
 };
 
 export default Home;

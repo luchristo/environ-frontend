@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import hero from "../assets/hero.png";
 import Navbar from "../components/Navbar";
 import BeforeAfterGallery from "../components/BeforeAfterGallery";
+import { Link } from "react-router-dom";
 
 function Home() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -99,9 +100,20 @@ function Home() {
         </div>
       </section>
 
-      <footer style={footer}>
-        <strong>© Environ Facilities</strong>
-      </footer>
+     <footer style={footer}>
+  <strong>© Environ Facilities</strong>
+  <div style={footerLinks}>
+    <Link to="/privacy-policy" style={footerLink}>
+      Privacy Policy
+    </Link>
+    <Link to="/terms-and-conditions" style={footerLink}>
+      Terms & Conditions
+    </Link>
+    <Link to="/cookie-policy" style={footerLink}>
+      Cookie Policy
+    </Link>
+  </div>
+</footer>
 
       <a
         href="https://wa.me/447404536265"
@@ -318,6 +330,20 @@ const footer = {
   padding: "24px 20px",
   backgroundColor: "#1c2b44",
   color: "white",
+};
+
+const footerLinks = {
+  marginTop: "12px",
+  display: "flex",
+  justifyContent: "center",
+  gap: "18px",
+  flexWrap: "wrap",
+};
+
+const footerLink = {
+  color: "#cbd5e1",
+  textDecoration: "none",
+  fontSize: "14px",
 };
 
 const whatsappButton = {

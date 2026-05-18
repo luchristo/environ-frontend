@@ -4,6 +4,7 @@ import hero from "../assets/hero.png";
 import Navbar from "../components/Navbar";
 import BeforeAfterGallery from "../components/BeforeAfterGallery";
 import { Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 function Home() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);

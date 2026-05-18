@@ -22,16 +22,11 @@ function CustomerDashboard() {
   });
 
   const services = [
-    "Domestic Cleaning",
-    "Commercial Cleaning",
-    "End of Tenancy Cleaning",
-    "Carpet Cleaning",
-    "Window Cleaning",
     "High Pressure Jet Wash",
     "Garden Maintenance",
     "Property Maintenance",
     "Building Management Support",
-    "Cleaning Operatives",
+  
   ];
 
   useEffect(() => {
@@ -141,13 +136,6 @@ const photoText =
   ${photoText}
   `;
 
-  setRequestForm({
-  service: "",
-  preferred_date: "",
-  message: "",
-  });
-  setPhotos([]);
-
     const { error } = await supabase.from("bookings").insert([
       {
         user_id: user?.id || null,
@@ -170,27 +158,41 @@ const photoText =
       return;
     }
 
-    await emailjs.send(
+ const emailData = {
+  name: profile?.full_name || user?.email || "Customer",
+  phone: profile?.phone || "",
+  email: profile?.email || user?.email || "",
+  service: requestForm.service,
+  address: profile?.address || "",
+  postcode: profile?.postcode || "",
+  message: fullMessage,
+};
+
+// Email to company/admin
+await emailjs.send(
   "service_uv59qba",
   "template_vduqtce",
-  {
-    name: profile?.full_name || user?.email || "Customer",
-    phone: profile?.phone || "",
-    email: profile?.email || user?.email || "",
-    service: requestForm.service,
-    address: profile?.address || "",
-    postcode: profile?.postcode || "",
-    message: fullMessage,
-  },
+  emailData,
   "pN9rz35RPIteY-j3g"
 );
 
-    setStatusMessage("Your quote request has been sent.");
-    setRequestForm({
-      service: "",
-      preferred_date: "",
-      message: "",
-    });
+// Confirmation email to customer
+await emailjs.send(
+  "service_uv59qba",
+  "template_fvc0ega",
+  emailData,
+  "pN9rz35RPIteY-j3g"
+);
+
+setStatusMessage("Your quote request has been sent.");
+
+setRequestForm({
+  service: "",
+  preferred_date: "",
+  message: "",
+});
+
+setPhotos([]);
 
     await loadCustomer();
     setIsSubmitting(false);

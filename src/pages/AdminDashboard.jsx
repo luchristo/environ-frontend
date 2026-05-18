@@ -2,9 +2,7 @@ import { useEffect, useState } from "react";
 import emailjs from "@emailjs/browser";
 import { supabase } from "../lib/supabase";
 
-
 function AdminDashboard() {
-
   const [bookings, setBookings] = useState([]);
   const [invoiceInputs, setInvoiceInputs] = useState({});
   const [checkingAdmin, setCheckingAdmin] = useState(true);
@@ -33,15 +31,15 @@ function AdminDashboard() {
         .single();
 
       if (error || profile?.role !== "admin") {
-  alert("You are not allowed to access the admin dashboard.");
+        alert("You are not allowed to access the admin dashboard.");
 
-  await supabase.auth.signOut({ scope: "global" });
-  localStorage.clear();
-  sessionStorage.clear();
+        await supabase.auth.signOut({ scope: "global" });
+        localStorage.clear();
+        sessionStorage.clear();
 
-  window.location.replace("/admin-login");
-  return;
-}
+        window.location.replace("/admin-login");
+        return;
+      }
 
       setIsAdmin(true);
       await fetchBookings();
@@ -54,18 +52,18 @@ function AdminDashboard() {
   };
 
   const logout = async () => {
-  await supabase.auth.signOut({ scope: "global" });
+    await supabase.auth.signOut({ scope: "global" });
 
-  Object.keys(localStorage).forEach((key) => {
-    localStorage.removeItem(key);
-  });
+    Object.keys(localStorage).forEach((key) => {
+      localStorage.removeItem(key);
+    });
 
-  Object.keys(sessionStorage).forEach((key) => {
-    sessionStorage.removeItem(key);
-  });
+    Object.keys(sessionStorage).forEach((key) => {
+      sessionStorage.removeItem(key);
+    });
 
-  window.location.replace("/admin-login");
-};
+    window.location.replace("/admin-login");
+  };
 
   const fetchBookings = async () => {
     const { data, error } = await supabase
@@ -130,11 +128,11 @@ function AdminDashboard() {
     return cleanPhone;
   };
 
-  const sendQuoteEmail = async (booking) => {
+  const sendInvoiceEmail = async (booking) => {
     const invoiceData = getInvoiceData(booking);
 
     if (!invoiceData.amount || Number(invoiceData.amount) <= 0) {
-      alert("Please enter the quote amount first.");
+      alert("Please enter the invoice amount first.");
       return false;
     }
 
@@ -150,13 +148,16 @@ function AdminDashboard() {
           address: booking.address,
           postcode: booking.postcode,
           message: `
-Quote for ${booking.service}: £${Number(invoiceData.amount).toFixed(2)}
+Your invoice for ${booking.service}: £${Number(invoiceData.amount).toFixed(2)}
 
 ${invoiceData.notes ? `Notes: ${invoiceData.notes}` : ""}
 
-Please confirm if you would like to go ahead.
+${invoiceData.payment_link ? `Payment link: ${invoiceData.payment_link}` : ""}
+
+Please contact us if you have any questions.
 
 Environ Facilities
+07404 536265
           `,
         },
         "pN9rz35RPIteY-j3g"
@@ -165,41 +166,37 @@ Environ Facilities
       return true;
     } catch (error) {
       console.error(error);
-      alert("Could not send quote email. Check your EmailJS template.");
+      alert("Could not send invoice email.");
       return false;
     }
   };
 
-  const sendQuoteWhatsApp = (booking) => {
+  const sendInvoiceWhatsApp = (booking) => {
     const invoiceData = getInvoiceData(booking);
 
     if (!invoiceData.amount || Number(invoiceData.amount) <= 0) {
-      alert("Please enter the quote amount first.");
+      alert("Please enter the invoice amount first.");
       return;
     }
 
     const cleanPhone = formatPhoneForWhatsApp(booking.phone);
 
-    const quoteMessage = `
+    const invoiceMessage = `
 Hi ${booking.name},
 
-Thank you for your booking request.
-
-Your quote for ${booking.service} is £${Number(invoiceData.amount).toFixed(2)}.
-
-Address: ${booking.address}
-Postcode: ${booking.postcode}
+Your invoice for ${booking.service} is £${Number(invoiceData.amount).toFixed(2)}.
 
 ${invoiceData.notes ? `Notes: ${invoiceData.notes}` : ""}
 
-Please confirm if you would like to go ahead.
+${invoiceData.payment_link ? `Payment link: ${invoiceData.payment_link}` : ""}
 
+Thank you,
 Environ Facilities
 07404 536265
 `;
 
     window.open(
-      `https://wa.me/${cleanPhone}?text=${encodeURIComponent(quoteMessage)}`,
+      `https://wa.me/${cleanPhone}?text=${encodeURIComponent(invoiceMessage)}`,
       "_blank"
     );
   };
@@ -230,15 +227,15 @@ Environ Facilities
       console.error(error);
       alert("Could not create invoice. Check your invoices table and policies.");
       return;
-    }
+
+          }
 
     await supabase
       .from("bookings")
       .update({ status: "confirmed" })
       .eq("id", booking.id);
 
-    const emailSent = await sendQuoteEmail(booking);
-    sendQuoteWhatsApp(booking);
+    const emailSent = await sendInvoiceEmail(booking);
 
     setInvoiceInputs((prev) => ({
       ...prev,
@@ -253,8 +250,8 @@ Environ Facilities
 
     alert(
       emailSent
-        ? "Invoice created. Email sent and WhatsApp message opened."
-        : "Invoice created. WhatsApp message opened, but email was not sent."
+        ? "Invoice created and email sent successfully."
+        : "Invoice created but email was not sent."
     );
   };
 
@@ -284,26 +281,27 @@ Environ Facilities
   };
 
   const getBookingCount = (status) => {
-  return bookings.filter((booking) => booking.status === status).length;
-};
+    return bookings.filter((booking) => booking.status === status).length;
+  };
 
-const isMinimizedBooking = (booking) => {
-  return booking.status === "confirmed" || booking.status === "completed";
-};
+  const isMinimizedBooking = (booking) => {
+    return booking.status === "confirmed" || booking.status === "completed";
+  };
 
-const uniqueCustomers = Array.from(
-  new Map(
-    bookings
-      .filter((booking) => booking.email)
-      .map((booking) => [booking.email, booking])
-  ).values()
-);
+  const uniqueCustomers = Array.from(
+    new Map(
+      bookings
+        .filter((booking) => booking.email)
+        .map((booking) => [booking.email, booking])
+    ).values()
+  );
 
   if (checkingAdmin) {
     return <div style={loadingPage}>Checking admin access...</div>;
   }
 
   if (!isAdmin) return null;
+
   return (
     <div style={page}>
       <aside style={sidebar}>
@@ -379,16 +377,15 @@ const uniqueCustomers = Array.from(
           </div>
 
           <button
-  onClick={async () => {
-    setCheckingAdmin(true);
-    await fetchBookings();
-    setCheckingAdmin(false);
-  }}
-  style={refreshButton}
->
-  Refresh
-</button> 
-
+            onClick={async () => {
+              setCheckingAdmin(true);
+              await fetchBookings();
+              setCheckingAdmin(false);
+            }}
+            style={refreshButton}
+          >
+            Refresh
+          </button>
         </header>
 
         {activeTab === "dashboard" && (
@@ -408,7 +405,7 @@ const uniqueCustomers = Array.from(
                 <strong style={summaryNumber}>{getBookingCount("new")}</strong>
               </div>
             </div>
-                
+
             <div style={summaryCard}>
               <div style={summaryIcon}>✅</div>
               <div>
@@ -448,42 +445,39 @@ const uniqueCustomers = Array.from(
                   const readableMessage = cleanBookingMessage(booking.message);
 
                   if (isMinimizedBooking(booking)) {
-  return (
-    <article key={booking.id} style={miniBookingCard}>
-      <div>
-        <h3 style={bookingName}>
-          {booking.name || "Customer"}
-        </h3>
+                    return (
+                      <article key={booking.id} style={miniBookingCard}>
+                        <div>
+                          <h3 style={bookingName}>
+                            {booking.name || "Customer"}
+                          </h3>
 
-        <p style={bookingMeta}>
-          {booking.service} •{" "}
-          {formatDate(
-            booking.preferred_date || booking.created_at
-          )}
-        </p>
-      </div>
+                          <p style={bookingMeta}>
+                            {booking.service} •{" "}
+                            {formatDate(
+                              booking.preferred_date || booking.created_at
+                            )}
+                          </p>
+                        </div>
 
-      <div style={miniActions}>
-        <span style={statusBadge}>
-          {booking.status}
-        </span>
+                        <div style={miniActions}>
+                          <span style={statusBadge}>{booking.status}</span>
 
-        <button
-          style={smallBlueButton}
-          onClick={() =>
-            updateBookingStatus(booking.id, "new")
-          }
-        >
-          Reopen
-        </button>
-      </div>
-    </article>
-  );
-}
+                          <button
+                            style={smallBlueButton}
+                            onClick={() =>
+                              updateBookingStatus(booking.id, "new")
+                            }
+                          >
+                            Reopen
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  }
 
-return (
-  <article key={booking.id} style={bookingCard}>
-
+                  return (
+                    <article key={booking.id} style={bookingCard}>
                       <div style={bookingHeader}>
                         <div style={customerBlock}>
                           <div style={avatar}>
@@ -560,7 +554,9 @@ return (
                       </div>
 
                       <details style={quoteBox}>
-  <summary style={quoteSummary}>Create Quote / Invoice</summary>
+                        <summary style={quoteSummary}>
+                          Create Quote / Invoice
+                        </summary>
 
                         <div style={quoteGrid}>
                           <input
@@ -610,24 +606,26 @@ return (
                             style={sendButton}
                             onClick={() => createInvoice(booking)}
                           >
-                            Create Invoice + Send
-                          </button>
-
-                          <button
-                            style={whatsappButton}
-                            onClick={() => sendQuoteWhatsApp(booking)}
-                          >
-                            WhatsApp Only
+                            Create Invoice
                           </button>
 
                           <button
                             style={emailButton}
                             onClick={async () => {
-                              const sent = await sendQuoteEmail(booking);
-                              if (sent) alert("Quote email sent successfully.");
+                              const sent = await sendInvoiceEmail(booking);
+                              if (sent) {
+                                alert("Invoice email sent successfully.");
+                              }
                             }}
                           >
-                            Email Only
+                            Send Invoice Email
+                          </button>
+
+                          <button
+                            style={whatsappButton}
+                            onClick={() => sendInvoiceWhatsApp(booking)}
+                          >
+                            Send Invoice WhatsApp
                           </button>
                         </div>
                       </details>
@@ -695,7 +693,9 @@ return (
               ) : (
                 bookings.map((booking) => (
                   <div key={booking.id} style={calendarCard}>
-                   <strong>{formatDate(booking.preferred_date || booking.created_at)}</strong>
+                    <strong>
+                      {formatDate(booking.preferred_date || booking.created_at)}
+                    </strong>
                     <p style={calendarText}>{booking.name || "Customer"}</p>
                     <p style={calendarText}>{booking.service}</p>
                     <span style={statusBadge}>{booking.status || "new"}</span>
@@ -716,9 +716,7 @@ return (
               ) : (
                 uniqueCustomers.map((customer) => (
                   <div key={customer.email || customer.id} style={bookingCard}>
-                    <h3 style={bookingName}>
-                      {customer.name || "Customer"}
-                    </h3>
+                    <h3 style={bookingName}>{customer.name || "Customer"}</h3>
 
                     <div style={infoGrid}>
                       <div style={infoItem}>
@@ -753,8 +751,8 @@ return (
             <h2 style={sectionTitle}>Services</h2>
 
             <div style={emptyBox}>
-              Services are currently managed in your service page files inside
-              VS Code.
+              Services are currently managed in your service page files inside VS
+              Code.
             </div>
           </section>
         )}
@@ -764,6 +762,7 @@ return (
     </div>
   );
 }
+
 const loadingPage = {
   minHeight: "100vh",
   backgroundColor: "#f5f7fb",
@@ -1235,4 +1234,3 @@ const footer = {
 };
 
 export default AdminDashboard;
-

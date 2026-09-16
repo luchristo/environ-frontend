@@ -1,6 +1,9 @@
+import hero640 from "../assets/hero-640.webp";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import hero from "../assets/hero.webp";
+import hero480 from "../assets/hero-480.webp";
+import hero800 from "../assets/hero-800.webp";
+import hero1200 from "../assets/hero-1200.webp";
 import Navbar from "../components/Navbar";
 import BeforeAfterGallery from "../components/BeforeAfterGallery";
 
@@ -63,7 +66,7 @@ function Home() {
         </div>
 
         <div style={heroImageBox}>
-          <img fetchPriority="high" width="1200" height="675" src={hero} alt="Environ Facilities" style={isMobile ? mobileHeroImage : heroImage} />
+          <img fetchPriority="high" width="1200" height="800" src={hero800} srcSet={`${hero480} 480w, ${hero640} 640w, ${hero800} 800w, ${hero1200} 1200w`} sizes="(max-width: 768px) calc(100vw - 68px), 520px" alt="Environ Facilities" style={isMobile ? mobileHeroImage : heroImage} />
         </div>
       </section>
 
@@ -75,7 +78,7 @@ function Home() {
             <Link key={service.title} to={service.path} style={serviceCard}>
               <span>{service.title}</span>
               <p style={serviceText}>{service.text}</p>
-              <small style={cardSmall}>Request quote →</small>
+              <small style={cardSmall}>Request quote â†’</small>
             </Link>
           ))}
         </div>
@@ -105,7 +108,7 @@ function Home() {
 
      </main>
      <footer style={footer}>
-  <strong>© Environ Facilities</strong>
+  <strong>Â© Environ Facilities</strong>
   <div style={footerLinks}>
     <Link to="/privacy-policy" style={footerLink}>
       Privacy Policy

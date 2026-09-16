@@ -1,11 +1,17 @@
-import jetwashBefore from "../assets/work/jetwashbefore1.webp";
-import jetwashAfter from "../assets/work/jetwashafter1.webp";
+import jetwashBefore from "../assets/work/jetwashbefore1-960.webp";
+import jetwashBeforeSmall from "../assets/work/jetwashbefore1-480.webp";
+import jetwashAfter from "../assets/work/jetwashafter1-960.webp";
+import jetwashAfterSmall from "../assets/work/jetwashafter1-480.webp";
 
-import buildingBefore from "../assets/work/building1a.webp";
-import buildingAfter from "../assets/work/building1b.webp";
+import buildingBefore from "../assets/work/building1a-960.webp";
+import buildingBeforeSmall from "../assets/work/building1a-480.webp";
+import buildingAfter from "../assets/work/building1b-960.webp";
+import buildingAfterSmall from "../assets/work/building1b-480.webp";
 
-import propertyBefore from "../assets/work/property1a.webp";
-import propertyAfter from "../assets/work/property1b.webp";
+import propertyBefore from "../assets/work/property1a-960.webp";
+import propertyBeforeSmall from "../assets/work/property1a-480.webp";
+import propertyAfter from "../assets/work/property1b-960.webp";
+import propertyAfterSmall from "../assets/work/property1b-480.webp";
 
 function BeforeAfterGallery() {
   const work = [
@@ -13,19 +19,25 @@ function BeforeAfterGallery() {
       title: "High Pressure Jet Washing",
       description: "Patios, driveways and outdoor surfaces cleaned professionally.",
       before: jetwashBefore,
+      beforeSmall: jetwashBeforeSmall,
       after: jetwashAfter,
+      afterSmall: jetwashAfterSmall,
     },
     {
       title: "Building Maintenance",
       description: "Exterior care, repairs and property upkeep for managed buildings.",
       before: buildingBefore,
+      beforeSmall: buildingBeforeSmall,
       after: buildingAfter,
+      afterSmall: buildingAfterSmall,
     },
     {
       title: "Property Maintenance",
       description: "Reliable improvements and maintenance support for homes and businesses.",
       before: propertyBefore,
+      beforeSmall: propertyBeforeSmall,
       after: propertyAfter,
+      afterSmall: propertyAfterSmall,
     },
   ];
 
@@ -50,12 +62,12 @@ function BeforeAfterGallery() {
             <div style={imageGrid}>
               <div style={imageBox}>
                 <span style={beforeBadge}>Before</span>
-                <img loading="lazy" decoding="async" width="600" height="260" src={item.before} alt={`${item.title} before`} style={image} />
+                <img loading="lazy" decoding="async" width="600" height="260" src={item.before} srcSet={`${item.beforeSmall} 480w, ${item.before} 960w`} sizes="(max-width: 580px) calc(100vw - 84px), (max-width: 1126px) calc((100vw - 100px) / 2), 475px" alt={`${item.title} before`} style={image} />
               </div>
 
               <div style={imageBox}>
                 <span style={afterBadge}>After</span>
-                <img loading="lazy" decoding="async" width="600" height="260" src={item.after} alt={`${item.title} after`} style={image} />
+                <img loading="lazy" decoding="async" width="600" height="260" src={item.after} srcSet={`${item.afterSmall} 480w, ${item.after} 960w`} sizes="(max-width: 580px) calc(100vw - 84px), (max-width: 1126px) calc((100vw - 100px) / 2), 475px" alt={`${item.title} after`} style={image} />
               </div>
             </div>
           </article>

@@ -1,6 +1,6 @@
 function PrivacyPolicy() {
   return (
-    <div style={container}>
+    <main style={container}>
       <h1>Privacy Policy</h1>
 
       <p>
@@ -34,7 +34,7 @@ function PrivacyPolicy() {
       <p>
         Email: environfacilities@gmail.com
       </p>
-    </div>
+    </main>
   );
 }
 

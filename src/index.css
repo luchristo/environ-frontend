@@ -110,3 +110,10 @@ select:focus-visible, textarea:focus-visible {
   color: #005e70;
 }
 .skip-link:focus { transform: translateY(0); }
+
+/* Persistent labels and readable controls across forms. */
+.field-label { text-align: left; font-weight: 600; color: #1c2b44; }
+input, textarea, select { min-width: 0; max-width: 100%; color: #1c2b44; background-color: white; }
+input::placeholder, textarea::placeholder { color: #52627a; opacity: 1; }
+input[type="file"] { width: 100%; }
+button:disabled { cursor: wait; }

@@ -1,6 +1,6 @@
 function TermsConditions() {
   return (
-    <div style={container}>
+    <main style={container}>
       <h1>Terms & Conditions</h1>
 
       <p>
@@ -34,7 +34,7 @@ function TermsConditions() {
         Customers should provide reasonable notice for cancellations or booking
         changes.
       </p>
-    </div>
+    </main>
   );
 }
 

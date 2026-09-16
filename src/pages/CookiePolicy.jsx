@@ -1,6 +1,6 @@
 function CookiePolicy() {
   return (
-    <div style={container}>
+    <main style={container}>
       <h1>Cookie Policy</h1>
 
       <p>
@@ -27,7 +27,7 @@ function CookiePolicy() {
       <p>
         You can disable cookies through your browser settings at any time.
       </p>
-    </div>
+    </main>
   );
 }
 

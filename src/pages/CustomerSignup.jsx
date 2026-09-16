@@ -72,11 +72,12 @@ function CustomerSignup() {
   };
 
   return (
-    <div style={page}>
+    <main style={page}>
       <form style={card} onSubmit={signup}>
         <h1 style={title}>Create Account</h1>
 
-        <input
+        <label htmlFor="customersignup-full_name" className="field-label">Full name</label>
+        <input id="customersignup-full_name" autoComplete="name"
           type="text"
           name="full_name"
           placeholder="Full name"
@@ -86,8 +87,8 @@ function CustomerSignup() {
           style={input}
         />
 
-        <input
-          type="text"
+        <label htmlFor="customersignup-phone" className="field-label">Phone number</label>
+        <input id="customersignup-phone" autoComplete="tel" type="tel"
           name="phone"
           placeholder="Phone number"
           required
@@ -96,7 +97,8 @@ function CustomerSignup() {
           style={input}
         />
 
-        <input
+        <label htmlFor="customersignup-email" className="field-label">Email address</label>
+        <input id="customersignup-email" autoComplete="email"
           type="email"
           name="email"
           placeholder="Email address"
@@ -106,7 +108,8 @@ function CustomerSignup() {
           style={input}
         />
 
-        <input
+        <label htmlFor="customersignup-address" className="field-label">Address</label>
+        <input id="customersignup-address" autoComplete="street-address"
           type="text"
           name="address"
           placeholder="Address"
@@ -116,7 +119,8 @@ function CustomerSignup() {
           style={input}
         />
 
-        <input
+        <label htmlFor="customersignup-postcode" className="field-label">Postcode</label>
+        <input id="customersignup-postcode" autoComplete="postal-code"
           type="text"
           name="postcode"
           placeholder="Postcode"
@@ -126,7 +130,8 @@ function CustomerSignup() {
           style={input}
         />
 
-        <input
+        <label htmlFor="customersignup-password" className="field-label">Password</label>
+        <input id="customersignup-password" autoComplete="new-password"
           type="password"
           name="password"
           placeholder="Password"
@@ -140,13 +145,13 @@ function CustomerSignup() {
           {loading ? "Creating..." : "Create Account"}
         </button>
 
-        {message && <p style={messageStyle}>{message}</p>}
+        {message && <p role="status" aria-live="polite" style={messageStyle}>{message}</p>}
 
         <p style={bottomText}>
           Already have an account? <Link to="/login">Login</Link>
         </p>
       </form>
-    </div>
+    </main>
   );
 }
 
@@ -186,7 +191,7 @@ const input = {
 
 const button = {
   padding: "16px",
-  backgroundColor: "#00BCD4",
+  backgroundColor: "#006f80",
   color: "white",
   border: "none",
   borderRadius: "12px",
@@ -197,7 +202,7 @@ const button = {
 
 const messageStyle = {
   textAlign: "center",
-  color: "#00BCD4",
+  color: "#006f80",
   fontWeight: "bold",
 };
 

@@ -62,11 +62,12 @@ function AdminLogin() {
   };
 
   return (
-    <div style={container}>
+    <main style={container}>
       <form onSubmit={handleLogin} style={form}>
         <h1 style={title}>Admin Login</h1>
 
-        <input
+        <label htmlFor="adminlogin-email" className="field-label">Admin email</label>
+        <input id="adminlogin-email" autoComplete="email"
           type="email"
           name="email"
           placeholder="Admin email"
@@ -76,7 +77,8 @@ function AdminLogin() {
           style={input}
         />
 
-        <input
+        <label htmlFor="adminlogin-password" className="field-label">Password</label>
+        <input id="adminlogin-password" autoComplete="current-password"
           type="password"
           name="password"
           placeholder="Password"
@@ -91,12 +93,12 @@ function AdminLogin() {
         </button>
 
         {errorMessage && (
-          <p style={errorText}>
+          <p role="alert" style={errorText}>
             {errorMessage}
           </p>
         )}
       </form>
-    </div>
+    </main>
   );
 }
 
@@ -136,7 +138,7 @@ const button = {
   padding: "16px",
   border: "none",
   borderRadius: "12px",
-  backgroundColor: "#00BCD4",
+  backgroundColor: "#006f80",
   color: "#ffffff",
   fontSize: "18px",
   fontWeight: "bold",
@@ -144,7 +146,7 @@ const button = {
 };
 
 const errorText = {
-  color: "red",
+  color: "#b42318",
   textAlign: "center",
   fontWeight: "bold",
 };

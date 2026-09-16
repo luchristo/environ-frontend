@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import emailjs from "@emailjs/browser";
 import { supabase } from "../lib/supabase";
 
 function BookingForm({ service, options }) {
@@ -22,23 +21,26 @@ function BookingForm({ service, options }) {
   });
 
   useEffect(() => {
-    loadLoggedInUser();
+    let active = true;
+    const loadLoggedInUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!active) return;
+      setCurrentUser(user || null);
+
+      if (user?.email) {
+        setFormData((prev) => ({
+          ...prev,
+          email: user.email,
+        }));
+      }
+    };
+
+    loadLoggedInUser().catch(console.error);
+    return () => { active = false; };
   }, []);
-
-  const loadLoggedInUser = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    setCurrentUser(user || null);
-
-    if (user?.email) {
-      setFormData((prev) => ({
-        ...prev,
-        email: user.email,
-      }));
-    }
-  };
 
   const toggleOption = (option) => {
     setSelectedOptions((prev) =>
@@ -130,6 +132,7 @@ ${photoText}
         return;
       }
 
+      const { default: emailjs } = await import("@emailjs/browser");
       await emailjs.send(
         "service_uv59qba",
         "template_vduqtce",
@@ -206,8 +209,8 @@ ${photoText}
   };
 
   return (
-    <div style={container}>
-      <h2 style={title}>Book {service}</h2>
+    <main style={container}>
+      <h1 style={title}>Book {service}</h1>
 
       {!currentUser && (
         <p style={loginNotice}>
@@ -217,7 +220,7 @@ ${photoText}
       )}
 
       <div style={optionsBox}>
-        <h3 style={smallTitle}>Choose what you need</h3>
+        <h2 style={smallTitle}>Choose what you need</h2>
 
         {options.map((option) => (
           <div key={option} style={optionRow}>
@@ -225,13 +228,15 @@ ${photoText}
 
             <button
               type="button"
+              aria-label={`${selectedOptions.includes(option) ? "Remove" : "Add"} ${option}`}
+              aria-pressed={selectedOptions.includes(option)}
               onClick={() => toggleOption(option)}
               style={{
                 ...addButton,
                 backgroundColor: selectedOptions.includes(option)
-                  ? "#00BCD4"
+                  ? "#006f80"
                   : "white",
-                color: selectedOptions.includes(option) ? "white" : "#00BCD4",
+                color: selectedOptions.includes(option) ? "white" : "#006f80",
               }}
             >
               {selectedOptions.includes(option) ? "Added" : "+"}
@@ -241,9 +246,10 @@ ${photoText}
       </div>
 
       <form onSubmit={submitBooking} style={form}>
-        <h3 style={smallTitle}>Where should we serve you?</h3>
+        <h2 style={smallTitle}>Where should we serve you?</h2>
 
-        <input
+        <label htmlFor="bookingform-postcode" className="field-label">Postcode</label>
+        <input id="bookingform-postcode" autoComplete="postal-code"
           name="postcode"
           placeholder="Postcode"
           value={formData.postcode}
@@ -252,7 +258,8 @@ ${photoText}
           style={input}
         />
 
-        <input
+        <label htmlFor="bookingform-address" className="field-label">Property address</label>
+        <input id="bookingform-address" autoComplete="street-address"
           name="address"
           placeholder="Property address"
           value={formData.address}
@@ -261,9 +268,10 @@ ${photoText}
           style={input}
         />
 
-        <h3 style={smallTitle}>Your contact details</h3>
+        <h2 style={smallTitle}>Your contact details</h2>
 
-        <input
+        <label htmlFor="bookingform-name" className="field-label">Full name</label>
+        <input id="bookingform-name" autoComplete="name"
           name="name"
           placeholder="Full name"
           value={formData.name}
@@ -272,7 +280,8 @@ ${photoText}
           style={input}
         />
 
-        <input
+        <label htmlFor="bookingform-phone" className="field-label">Phone number</label>
+        <input id="bookingform-phone" autoComplete="tel" type="tel"
           name="phone"
           placeholder="Phone number"
           value={formData.phone}
@@ -281,7 +290,8 @@ ${photoText}
           style={input}
         />
 
-        <input
+        <label htmlFor="bookingform-email" className="field-label">Email address</label>
+        <input id="bookingform-email" autoComplete="email"
           name="email"
           type="email"
           placeholder="Email address"
@@ -291,7 +301,8 @@ ${photoText}
           style={input}
         />
 
-        <textarea
+        <label htmlFor="bookingform-message" className="field-label">Any extra details?</label>
+        <textarea id="bookingform-message"
           name="message"
           placeholder="Any extra details?"
           value={formData.message}
@@ -301,9 +312,10 @@ ${photoText}
         />
 
         <div style={uploadBox}>
-          <label style={uploadLabel}>Upload photos for a better quote</label>
+          <label htmlFor="booking-photos" style={uploadLabel}>Upload photos for a better quote</label>
 
           <input
+            id="booking-photos"
             type="file"
             multiple
             accept="image/*"
@@ -319,9 +331,9 @@ ${photoText}
           {isSubmitting ? "Sending..." : "Send booking request"}
         </button>
 
-        {statusMessage && <p style={success}>{statusMessage}</p>}
+        <p role="status" aria-live="polite" style={success}>{statusMessage}</p>
       </form>
-    </div>
+    </main>
   );
 }
 
@@ -332,7 +344,7 @@ const container = {
 
 const title = {
   textAlign: "center",
-  fontSize: "42px",
+  fontSize: "clamp(26px, 5vw, 42px)",
   color: "#1c2b44",
 };
 
@@ -367,9 +379,10 @@ const optionRow = {
 
 const addButton = {
   width: "90px",
+  flexShrink: 0,
   padding: "10px",
   borderRadius: "12px",
-  border: "2px solid #00BCD4",
+  border: "2px solid #006f80",
   fontSize: "16px",
   fontWeight: "bold",
   cursor: "pointer",
@@ -379,7 +392,7 @@ const form = {
   maxWidth: "760px",
   margin: "35px auto",
   backgroundColor: "white",
-  padding: "35px",
+  padding: "clamp(16px, 4vw, 35px)",
   borderRadius: "22px",
   boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
   display: "flex",
@@ -402,7 +415,7 @@ const input = {
 
 const uploadBox = {
   backgroundColor: "#f5f7fb",
-  border: "2px dashed #00BCD4",
+  border: "2px dashed #006f80",
   borderRadius: "16px",
   padding: "22px",
   textAlign: "center",
@@ -417,14 +430,14 @@ const uploadLabel = {
 };
 
 const photoText = {
-  color: "#00BCD4",
+  color: "#006f80",
   fontWeight: "bold",
 };
 
 const submitButton = {
   marginTop: "15px",
   padding: "18px",
-  backgroundColor: "#F44336",
+  backgroundColor: "#b52c23",
   color: "white",
   border: "none",
   borderRadius: "14px",
@@ -436,7 +449,7 @@ const submitButton = {
 const success = {
   textAlign: "center",
   fontWeight: "bold",
-  color: "#00BCD4",
+  color: "#006f80",
   fontSize: "18px",
 };
 

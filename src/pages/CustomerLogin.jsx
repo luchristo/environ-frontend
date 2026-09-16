@@ -63,11 +63,12 @@ function CustomerLogin() {
   };
 
   return (
-    <div style={page}>
+    <main style={page}>
       <form style={card} onSubmit={login}>
         <h1 style={title}>Customer Login</h1>
 
-        <input
+        <label htmlFor="customerlogin-email" className="field-label">Email address</label>
+        <input id="customerlogin-email" autoComplete="email"
           type="email"
           name="email"
           placeholder="Email address"
@@ -77,7 +78,8 @@ function CustomerLogin() {
           style={input}
         />
 
-        <input
+        <label htmlFor="customerlogin-password" className="field-label">Password</label>
+        <input id="customerlogin-password" autoComplete="current-password"
           type="password"
           name="password"
           placeholder="Password"
@@ -91,13 +93,13 @@ function CustomerLogin() {
           {loading ? "Checking account..." : "Login"}
         </button>
 
-        {message && <p style={messageStyle}>{message}</p>}
+        {message && <p role="status" aria-live="polite" style={messageStyle}>{message}</p>}
 
         <p style={bottomText}>
           No account yet? <Link to="/signup">Create account</Link>
         </p>
       </form>
-    </div>
+    </main>
   );
 }
 
@@ -137,7 +139,7 @@ const input = {
 
 const button = {
   padding: "16px",
-  backgroundColor: "#00BCD4",
+  backgroundColor: "#006f80",
   color: "white",
   border: "none",
   borderRadius: "12px",
@@ -148,7 +150,7 @@ const button = {
 
 const messageStyle = {
   textAlign: "center",
-  color: "red",
+  color: "#b42318",
   fontWeight: "bold",
 };
 

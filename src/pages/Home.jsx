@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import hero from "../assets/hero.png";
+import hero from "../assets/hero.webp";
 import Navbar from "../components/Navbar";
 import BeforeAfterGallery from "../components/BeforeAfterGallery";
 
@@ -40,8 +40,10 @@ function Home() {
 
   return (
     <div style={page}>
+      <a className="skip-link" href="#main-content">Skip to main content</a>
       <Navbar />
 
+      <main id="main-content" tabIndex={-1}>
       <section style={isMobile ? mobileHeroSection : heroSection}>
         <div style={isMobile ? mobileHeroText : heroText}>
           <p style={tagline}>Property Care & Outdoor Maintenance in London</p>
@@ -61,7 +63,7 @@ function Home() {
         </div>
 
         <div style={heroImageBox}>
-          <img src={hero} alt="Environ Facilities" style={isMobile ? mobileHeroImage : heroImage} />
+          <img fetchPriority="high" width="1200" height="675" src={hero} alt="Environ Facilities" style={isMobile ? mobileHeroImage : heroImage} />
         </div>
       </section>
 
@@ -101,6 +103,7 @@ function Home() {
         </div>
       </section>
 
+     </main>
      <footer style={footer}>
   <strong>© Environ Facilities</strong>
   <div style={footerLinks}>
@@ -114,7 +117,7 @@ function Home() {
       Cookie Policy
     </Link>
   </div>
-</footer>
+
 
       <a
         href="https://wa.me/447404536265"
@@ -124,6 +127,7 @@ function Home() {
       >
         WhatsApp
       </a>
+</footer>
     </div>
   );
 }
@@ -170,7 +174,7 @@ const mobileHeroText = {
 };
 
 const tagline = {
-  color: "#00BCD4",
+  color: "#006f80",
   fontWeight: "bold",
   marginBottom: "12px",
   fontSize: "14px",
@@ -192,7 +196,7 @@ const mobileHeroTitle = {
 
 const heroSubtitle = {
   fontSize: "16px",
-  color: "#64748b",
+  color: "#52627a",
   lineHeight: "1.6",
   margin: "0 auto 24px",
   maxWidth: "460px",
@@ -200,7 +204,7 @@ const heroSubtitle = {
 
 const mobileHeroSubtitle = {
   fontSize: "14px",
-  color: "#64748b",
+  color: "#52627a",
   lineHeight: "1.6",
   margin: "0 auto 20px",
 };
@@ -209,7 +213,7 @@ const primaryButton = {
   display: "inline-block",
   padding: "13px 22px",
   borderRadius: "12px",
-  backgroundColor: "#00BCD4",
+  backgroundColor: "#006f80",
   color: "white",
   textDecoration: "none",
   fontWeight: "bold",
@@ -217,6 +221,8 @@ const primaryButton = {
 };
 
 const heroImageBox = {
+  width: "100%",
+  minWidth: 0,
   borderRadius: "18px",
   overflow: "hidden",
 };
@@ -284,7 +290,7 @@ const serviceCard = {
 };
 
 const serviceText = {
-  color: "#64748b",
+  color: "#52627a",
   fontSize: "14px",
   lineHeight: "1.5",
   fontWeight: "normal",
@@ -292,7 +298,7 @@ const serviceText = {
 };
 
 const cardSmall = {
-  color: "#00BCD4",
+  color: "#006f80",
   fontSize: "15px",
 };
 
@@ -351,7 +357,7 @@ const whatsappButton = {
   position: "fixed",
   right: "14px",
   bottom: "14px",
-  backgroundColor: "#25D366",
+  backgroundColor: "#137b3b",
   color: "white",
   padding: "11px 16px",
   borderRadius: "40px",

@@ -1,11 +1,11 @@
-import jetwashBefore from "../assets/work/jetwashbefore1.jpg";
-import jetwashAfter from "../assets/work/jetwashafter1.jpg";
+import jetwashBefore from "../assets/work/jetwashbefore1.webp";
+import jetwashAfter from "../assets/work/jetwashafter1.webp";
 
-import buildingBefore from "../assets/work/building1a.jpg";
-import buildingAfter from "../assets/work/building1b.jpg";
+import buildingBefore from "../assets/work/building1a.webp";
+import buildingAfter from "../assets/work/building1b.webp";
 
-import propertyBefore from "../assets/work/property1a.jpg";
-import propertyAfter from "../assets/work/property1b.jpg";
+import propertyBefore from "../assets/work/property1a.webp";
+import propertyAfter from "../assets/work/property1b.webp";
 
 function BeforeAfterGallery() {
   const work = [
@@ -50,12 +50,12 @@ function BeforeAfterGallery() {
             <div style={imageGrid}>
               <div style={imageBox}>
                 <span style={beforeBadge}>Before</span>
-                <img src={item.before} alt={`${item.title} before`} style={image} />
+                <img loading="lazy" decoding="async" width="600" height="260" src={item.before} alt={`${item.title} before`} style={image} />
               </div>
 
               <div style={imageBox}>
                 <span style={afterBadge}>After</span>
-                <img src={item.after} alt={`${item.title} after`} style={image} />
+                <img loading="lazy" decoding="async" width="600" height="260" src={item.after} alt={`${item.title} after`} style={image} />
               </div>
             </div>
           </article>
@@ -77,7 +77,7 @@ const headerBox = {
 };
 
 const tagline = {
-  color: "#00BCD4",
+  color: "#006f80",
   fontWeight: "800",
   margin: "0 0 8px",
   letterSpacing: "0.5px",
@@ -90,7 +90,7 @@ const title = {
 };
 
 const subtitle = {
-  color: "#64748b",
+  color: "#52627a",
   fontSize: "16px",
   lineHeight: "1.6",
   margin: 0,
@@ -125,7 +125,7 @@ const cardTitle = {
 };
 
 const description = {
-  color: "#64748b",
+  color: "#52627a",
   fontSize: "15px",
   lineHeight: "1.5",
   margin: 0,
@@ -133,7 +133,7 @@ const description = {
 
 const imageGrid = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+  gridTemplateColumns: "repeat(auto-fit, minmax(min(240px, 100%), 1fr))",
   gap: "16px",
 };
 
@@ -161,7 +161,7 @@ const afterBadge = {
   position: "absolute",
   top: "12px",
   left: "12px",
-  backgroundColor: "rgba(0,188,212,0.95)",
+  backgroundColor: "#006f80",
   color: "white",
   padding: "7px 12px",
   borderRadius: "999px",

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import hero from "../assets/hero.png";
+import hero from "../assets/logo.webp";
 
 function Navbar() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -17,10 +17,10 @@ function Navbar() {
   return (
     <header style={isMobile ? mobileHeader : header}>
       <div style={isMobile ? mobileLeftSide : leftSide}>
-        <img src={hero} alt="Environ Facilities" style={isMobile ? mobileLogoImage : logoImage} />
+        <img width="82" height="82" src={hero} alt="Environ Facilities" style={isMobile ? mobileLogoImage : logoImage} />
 
         <div style={isMobile ? mobileTextBox : {}}>
-          <h1 style={isMobile ? mobileLogo : logo}>ENVIRON FACILITIES</h1>
+          <p style={isMobile ? mobileLogo : logo}>ENVIRON FACILITIES</p>
 
           <div style={isMobile ? mobileContactRow : contactRow}>
             <span>+44 7404 536265</span>
@@ -113,7 +113,7 @@ const contactRow = {
   display: "flex",
   gap: "14px",
   marginTop: "6px",
-  color: "#64748b",
+  color: "#52627a",
   fontSize: "15px",
 };
 
@@ -122,13 +122,13 @@ const mobileContactRow = {
   flexDirection: "column",
   gap: "3px",
   marginTop: "6px",
-  color: "#64748b",
+  color: "#52627a",
   fontSize: "13px",
   wordBreak: "break-word",
 };
 
 const loginButton = {
-  backgroundColor: "#06b6d4",
+  backgroundColor: "#006f80",
   color: "white",
   textDecoration: "none",
   padding: "14px 26px",
@@ -138,7 +138,7 @@ const loginButton = {
 };
 
 const mobileLoginButton = {
-  backgroundColor: "#06b6d4",
+  backgroundColor: "#006f80",
   color: "white",
   textDecoration: "none",
   padding: "11px 22px",

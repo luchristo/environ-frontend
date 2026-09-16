@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import hero from "../assets/logo.webp";
+import hero from "../assets/logo-82.webp";
+import heroRetina from "../assets/logo-164.webp";
 
 function Navbar() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -17,7 +18,7 @@ function Navbar() {
   return (
     <header style={isMobile ? mobileHeader : header}>
       <div style={isMobile ? mobileLeftSide : leftSide}>
-        <img width="82" height="82" src={hero} alt="Environ Facilities" style={isMobile ? mobileLogoImage : logoImage} />
+        <img width="82" height="82" src={hero} srcSet={`${hero} 82w, ${heroRetina} 164w`} sizes="(max-width: 768px) 74px, 82px" alt="Environ Facilities" style={isMobile ? mobileLogoImage : logoImage} />
 
         <div style={isMobile ? mobileTextBox : {}}>
           <p style={isMobile ? mobileLogo : logo}>ENVIRON FACILITIES</p>
